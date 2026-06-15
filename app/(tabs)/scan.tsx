@@ -1,5 +1,9 @@
-import { Redirect } from 'expo-router';
+import { useEffect } from 'react';
+import { router } from 'expo-router';
 
 export default function ScanTab() {
-  return <Redirect href="/camera" />;
+  useEffect(() => {
+    router.push('/camera');
+  }, []);
+  return null;
 }
