@@ -15,7 +15,7 @@ export default function CameraScreen() {
 
   const handleBack = () => {
     setActive(false);
-    router.back();
+    router.dismiss();
   };
 
   if (!permission) {
