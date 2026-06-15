@@ -1,25 +1,44 @@
 {
   "expo": {
-    "name": "storage",
-    "slug": "storage",
+    "name": "TidyZen",
+    "slug": "tidyzen",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "scheme": "tidyzen",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "TidyZen 需要访问相机来拍摄房间照片，以便 AI 分析房间整洁度并提供整理建议。"
+      },
+      "bundleIdentifier": "com.anonymous.tidyzen"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#2d6a4f",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "TidyZen 需要访问相机来拍摄房间照片。"
+        }
+      ]
+    ]
   }
 }
