@@ -20,22 +20,35 @@ export default function HistoryScreen() {
   const { filter, setFilter } = useHistoryStore();
   const records = MOCK_RECORDS;
 
-  const filteredRecords = records.filter((r) => {
+  const filteredRecords = records.filter((_r) => {
     if (filter === 'all') return true;
     return true;
   });
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* 顶部标题栏 */}
-      <View style={styles.header}>
-        <Text style={styles.title}>整理记录</Text>
-        <TouchableOpacity style={styles.filterBtn}>
-          <MaterialIcons name="filter-list" size={22} color={colors.onSurfaceVariant} />
+      {/* 顶部导航栏：深绿背景 */}
+      <View style={styles.navbar}>
+        {/* 左侧汉堡菜单 */}
+        <TouchableOpacity style={styles.navIconBtn}>
+          <MaterialIcons name="menu" size={24} color={colors.onPrimary} />
         </TouchableOpacity>
+
+        {/* 中间标题 */}
+        <Text style={styles.navTitle}>整理记录</Text>
+
+        {/* 右侧：筛选图标 + 圆形头像 */}
+        <View style={styles.navRight}>
+          <TouchableOpacity style={styles.navIconBtn}>
+            <MaterialIcons name="filter-list" size={22} color={colors.onPrimary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.avatarBtn}>
+            <MaterialIcons name="person" size={20} color={colors.onPrimary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* 分段控制器 */}
+      {/* 时间段筛选标签栏 */}
       <View style={styles.segmentWrapper}>
         <SegmentedControl
           options={['全部', '本周', '本月']}
@@ -44,7 +57,7 @@ export default function HistoryScreen() {
         />
       </View>
 
-      {/* 列表 */}
+      {/* 列表 / 空状态 */}
       {filteredRecords.length === 0 ? (
         <EmptyState
           icon="photo-camera"
@@ -72,22 +85,53 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.pageMargin, paddingVertical: spacing.md,
+  container: {
+    flex: 1,
+    backgroundColor: colors.surface,
   },
-  title: {
+  // ── 导航栏 ──
+  navbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    height: 52,
+  },
+  navIconBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navTitle: {
     fontFamily: 'BeVietnamPro_700Bold',
-    fontSize: typography.headlineLgMobile?.fontSize ?? 24,
-    lineHeight: typography.headlineLgMobile?.lineHeight ?? 32,
-    color: colors.onSurface,
+    fontSize: typography.headlineMd.fontSize,
+    color: colors.onPrimary,
   },
-  filterBtn: {
-    width: 40, height: 40, borderRadius: radius.full,
-    backgroundColor: colors.surfaceContainer,
-    alignItems: 'center', justifyContent: 'center',
+  navRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
-  segmentWrapper: { paddingHorizontal: spacing.pageMargin, marginBottom: spacing.md },
-  list: { paddingHorizontal: spacing.pageMargin, paddingBottom: 100 },
+  avatarBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // ── 分段控制器 ──
+  segmentWrapper: {
+    paddingHorizontal: spacing.pageMargin,
+    marginTop: spacing.md,
+    marginBottom: spacing.md,
+  },
+  // ── 列表 ──
+  list: {
+    paddingHorizontal: spacing.pageMargin,
+    paddingBottom: 100,
+  },
 });
