@@ -1,22 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { spacing, radius } from '../../constants/theme';
-
-// ── 设计稿专用色板 ──
-const C = {
-  primary: '#2D6B5B',
-  primaryLight: '#E8F5E9',
-  dangerBg: '#FFF0F0',
-  danger: '#E53935',
-  orange: '#FF9800',
-  grayLight: '#E0E0E0',
-  grayBg: '#F5F5F5',
-  pageBg: '#FFFFFF',       // 纯白底色
-  grayText: '#666666',
-  black: '#000000',
-  white: '#FFFFFF',
-} as const;
+import { colors, typography, spacing, radius } from '../../constants/theme';
 
 // ── 环形进度条（纯 RN，无 SVG 依赖）──
 function CircularProgress({
@@ -37,7 +22,7 @@ function CircularProgress({
 
   return (
     <View style={{ width: size, height: size }}>
-      {/* 灰色背景环（15% 未完成部分） */}
+      {/* 灰色背景环 */}
       <View
         style={{
           position: 'absolute',
@@ -45,7 +30,7 @@ function CircularProgress({
           height: size,
           borderRadius: circleRadius,
           borderWidth: strokeWidth,
-          borderColor: C.grayLight,
+          borderColor: colors.outlineVariant,
         }}
       />
 
@@ -65,7 +50,7 @@ function CircularProgress({
             height: size,
             borderRadius: circleRadius,
             borderWidth: strokeWidth,
-            borderColor: C.primary,
+            borderColor: colors.primary,
             position: 'absolute',
             left: -half,
             transform: [{ rotate: `${rightDeg}deg` }],
@@ -89,7 +74,7 @@ function CircularProgress({
               height: size,
               borderRadius: circleRadius,
               borderWidth: strokeWidth,
-              borderColor: C.primary,
+              borderColor: colors.primary,
               position: 'absolute',
               transform: [{ rotate: `${leftDeg}deg` }],
             }}
@@ -104,7 +89,7 @@ function CircularProgress({
           width: innerSize,
           height: innerSize,
           borderRadius: innerSize / 2,
-          backgroundColor: C.white,
+          backgroundColor: colors.paperWhite,
           top: strokeWidth,
           left: strokeWidth,
         }}
@@ -127,9 +112,7 @@ function VerticalGradient({
 }) {
   return (
     <View style={{ height, position: 'relative', overflow: 'hidden' }}>
-      {/* 底色 = bottomColor */}
       <View style={{ ...StyleSheet.absoluteFill, backgroundColor: bottomColor }} />
-      {/* 上半部分：topColor */}
       <View
         style={{
           position: 'absolute',
@@ -140,7 +123,6 @@ function VerticalGradient({
           backgroundColor: topColor,
         }}
       />
-      {/* 中间过渡带：topColor 半透明叠加 */}
       <View
         style={{
           ...StyleSheet.absoluteFill,
@@ -160,8 +142,8 @@ const FEATURE_CARDS = [
     desc: '将椅子上的衣物分类，常穿的挂起，待洗的放入脏衣篓。',
     time: '3分钟完成',
     tag: '必做',
-    tagColor: '#FFB347',          // 金色背景
-    tagTextColor: C.black,        // 黑色文字
+    tagColor: colors.warmAmber,
+    tagTextColor: colors.onPrimary,
     buttonLabel: '开始整理',
     buttonVariant: 'primary' as const,
   },
@@ -170,8 +152,8 @@ const FEATURE_CARDS = [
     desc: '将桌面上所有物品归位，杂物扔掉，只保留每天必需的 3 件物品。',
     time: '5分钟完成',
     tag: '备选',
-    tagColor: '#78909C',
-    tagTextColor: C.white,
+    tagColor: colors.outline,
+    tagTextColor: colors.onPrimary,
     buttonLabel: '查看',
     buttonVariant: 'outline' as const,
   },
@@ -199,10 +181,10 @@ function FeatureCard({
 }) {
   return (
     <View style={styles.featureCard}>
-      {/* 顶部渐变区（从下到上：深银灰 → 极浅灰白） */}
+      {/* 顶部渐变区 */}
       <VerticalGradient bottomColor="#A0A4A8" topColor="#FAFBFC" height={80}>
         <View style={styles.cardTags}>
-          <View style={[styles.tag, styles.tagGreen]}>
+          <View style={[styles.tag, styles.tagTime]}>
             <Text style={styles.tagText}>{time}</Text>
           </View>
           <View style={[styles.tag, { backgroundColor: tagColor }]}>
@@ -226,7 +208,7 @@ function FeatureCard({
         activeOpacity={0.8}
       >
         {buttonVariant === 'primary' && (
-          <MaterialIcons name="play-arrow" size={16} color={C.white} />
+          <MaterialIcons name="play-arrow" size={16} color={colors.onPrimary} />
         )}
         <Text
           style={[
@@ -251,10 +233,10 @@ export default function HomeScreen() {
       >
         {/* ── 一、顶部导航栏 ── */}
         <View style={styles.topBar}>
-          <MaterialIcons name="bar-chart" size={24} color={C.primary} />
+          <MaterialIcons name="bar-chart" size={24} color={colors.primary} />
           <Text style={styles.topBarTitle}>整洁得分：85</Text>
           <View style={styles.avatarCircle}>
-            <MaterialIcons name="person" size={18} color={C.grayText} />
+            <MaterialIcons name="person" size={18} color={colors.onSurfaceVariant} />
           </View>
         </View>
 
@@ -269,9 +251,9 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* ── 三、杂乱提示区（带阴影）── */}
+        {/* ── 三、杂乱提示区 ── */}
         <View style={styles.clutterAlert}>
-          <MaterialIcons name="warning" size={16} color={C.danger} />
+          <MaterialIcons name="warning" size={16} color={colors.error} />
           <Text style={styles.clutterText}>检测到3处杂乱</Text>
         </View>
 
@@ -312,7 +294,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.comparisonRight}>
-            <MaterialIcons name="trending-up" size={24} color={C.primary} />
+            <MaterialIcons name="trending-up" size={24} color={colors.primary} />
             <Text style={styles.comparisonScore}>+15分</Text>
           </View>
         </View>
@@ -328,7 +310,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.pageBg,   // 偏白的浅灰底色
+    backgroundColor: colors.paperWhite,
   },
   scrollContent: {
     paddingHorizontal: spacing.pageMargin,
@@ -342,16 +324,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   topBarTitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: C.grayText,
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurfaceVariant,
   },
   avatarCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: radius.full,
     borderWidth: 1.5,
-    borderColor: C.primary,
+    borderColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -378,15 +360,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ringScoreText: {
-    fontSize: 60,
-    fontWeight: '700',
-    color: C.primary,
-    lineHeight: 66,
+    fontFamily: 'BeVietnamPro_800ExtraBold',
+    fontSize: typography.scoreDisplay.fontSize,
+    lineHeight: typography.scoreDisplay.lineHeight,
+    color: colors.primary,
   },
   ringScoreLabel: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: C.black,
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurface,
     marginTop: 2,
   },
 
@@ -396,22 +378,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    backgroundColor: C.dangerBg,
+    backgroundColor: colors.errorContainer,
     borderRadius: 12,
     height: 36,
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
     marginBottom: spacing.lg,
-    shadowColor: '#E53935',
+    shadowColor: colors.error,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 4,
     elevation: 2,
   },
   clutterText: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: C.black,
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurface,
   },
 
   /* ── 核心功能区标题 ── */
@@ -422,14 +404,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: C.black,
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.headlineLgMobile.fontSize,
+    color: colors.onSurface,
   },
   viewAll: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: C.primary,
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.primary,
   },
 
   /* ── 横向滚动容器 ── */
@@ -441,9 +423,9 @@ const styles = StyleSheet.create({
   /* ── 功能卡片 ── */
   featureCard: {
     width: 260,
-    backgroundColor: C.white,
+    backgroundColor: colors.paperWhite,
     borderRadius: radius.md,
-    shadowColor: C.grayBg,
+    shadowColor: colors.surface,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 8,
@@ -463,13 +445,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
   },
-  tagGreen: {
-    backgroundColor: C.primary,
+  tagTime: {
+    backgroundColor: colors.primary,
   },
   tagText: {
-    fontSize: 12,
-    fontWeight: '400',
-    color: C.white,
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.labelCaps.fontSize,
+    color: colors.onPrimary,
   },
   cardBody: {
     paddingHorizontal: spacing.md,
@@ -477,15 +459,15 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: C.black,
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.bodyLg.fontSize,
+    color: colors.onSurface,
     marginBottom: spacing.xs,
   },
   cardDesc: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: C.black,
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurface,
     lineHeight: 21,
   },
   cardButton: {
@@ -493,7 +475,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    backgroundColor: C.primary,
+    backgroundColor: colors.primary,
     height: 44,
     borderRadius: 20,
     paddingHorizontal: spacing.lg,
@@ -503,25 +485,25 @@ const styles = StyleSheet.create({
   cardButtonOutline: {
     backgroundColor: 'transparent',
     borderWidth: 1.5,
-    borderColor: C.primary,
+    borderColor: colors.primary,
   },
   cardButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: C.white,
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.bodyLg.fontSize,
+    color: colors.onPrimary,
   },
   cardButtonTextOutline: {
-    color: C.primary,
+    color: colors.primary,
   },
 
   /* ── 最近对比区 ── */
   comparisonCard: {
     flexDirection: 'row',
-    backgroundColor: C.white,
+    backgroundColor: colors.paperWhite,
     borderRadius: radius.md,
     height: 120,
     padding: spacing.md,
-    shadowColor: C.grayBg,
+    shadowColor: colors.surface,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 8,
@@ -537,7 +519,7 @@ const styles = StyleSheet.create({
   comparisonBox: {
     flex: 1,
     aspectRatio: 1,
-    backgroundColor: C.grayBg,
+    backgroundColor: colors.surfaceContainer,
     borderRadius: radius.sm,
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
@@ -549,15 +531,15 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: radius.sm,
   },
   beforeLabel: {
-    backgroundColor: C.grayText,
+    backgroundColor: colors.outline,
   },
   afterLabel: {
-    backgroundColor: C.primary,
+    backgroundColor: colors.primary,
   },
   comparisonLabelText: {
-    fontSize: 10,
-    fontWeight: '400',
-    color: C.white,
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.labelCaps.fontSize,
+    color: colors.onPrimary,
   },
   comparisonRight: {
     flex: 3,
@@ -565,9 +547,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   comparisonScore: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: C.primary,
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.primary,
     marginTop: 4,
   },
 });

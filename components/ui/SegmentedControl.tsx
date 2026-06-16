@@ -29,16 +29,17 @@ export function SegmentedControl({ options, selected, onChange }: SegmentedContr
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: radius.md,
-    padding: 3,
+    backgroundColor: '#EFEFEF',
+    borderRadius: 24,
+    padding: 4,
+    height: 44,
   },
   segment: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.sm,
-    borderRadius: radius.md,
+    paddingVertical: spacing.sm - 2,
+    borderRadius: 20,
   },
   selected: {
     backgroundColor: colors.primary,

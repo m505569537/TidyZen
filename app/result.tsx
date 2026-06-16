@@ -67,9 +67,23 @@ export default function ResultScreen() {
                 color={getBboxColor(item.confidence)}
               />
             ))}
+
+          {/* 图片底部信息条：半透明白色 */}
+          <View style={styles.photoInfoBar}>
+            <View style={styles.photoInfoLeft}>
+              <MaterialIcons name="search" size={16} color={colors.onSurfaceVariant} />
+              <Text style={styles.photoInfoText}>
+                发现 {result.clutterItems.length} 处可优化区域
+              </Text>
+            </View>
+            <View style={styles.photoInfoPill}>
+              <MaterialIcons name="timer" size={14} color={colors.onSurfaceVariant} />
+              <Text style={styles.photoInfoPillText}>耗时约 5 分钟</Text>
+            </View>
+          </View>
         </View>
 
-        {/* ── 纠错按钮 ── */}
+        {/* ── 纠错按钮：金色背景 (#FFC940) ── */}
         {result.needsCorrection && (
           <TouchableOpacity
             style={styles.correctionBtn}
@@ -77,46 +91,36 @@ export default function ResultScreen() {
             activeOpacity={0.8}
           >
             <MaterialIcons name="touch-app" size={20} color={colors.onSurface} />
-            <Text style={styles.correctionText}>识别不准？手动选择场景</Text>
-            <MaterialIcons name="chevron-right" size={20} color={colors.onSurfaceVariant} />
+            <Text style={styles.correctionText}>识别不准？点这里手动选择场景</Text>
+            <MaterialIcons name="chevron-right" size={20} color={colors.onSurface} />
           </TouchableOpacity>
         )}
-
-        {/* ── 摘要栏：灰色背景 ── */}
-        <View style={styles.summaryBar}>
-          <View style={styles.summaryItem}>
-            <MaterialIcons name="search" size={16} color={colors.onSurfaceVariant} />
-            <Text style={styles.summaryText}>
-              发现 {result.clutterItems.length} 处可优化区域
-            </Text>
-          </View>
-          <View style={styles.summaryPill}>
-            <MaterialIcons name="timer" size={14} color={colors.onSurfaceVariant} />
-            <Text style={styles.summaryPillText}>耗时约 5 分钟</Text>
-          </View>
-        </View>
 
         {/* ── 优化清单 ── */}
         <Text style={styles.sectionTitle}>优化清单</Text>
         {result.suggestions.map((suggestion, index) => {
-          const isLast = index === result.suggestions.length - 1;
+          const isHighConfidence = index === 0 || (result.clutterItems[0]?.confidence ?? 0) >= 0.8;
           return (
             <TouchableOpacity
               key={suggestion.id}
-              style={[
-                styles.optimizationCard,
-                isLast && result.lighting === 'dim' && styles.ambianceCard,
-              ]}
+              style={styles.optimizationCard}
               onPress={() => router.push(`/detail/${suggestion.id}`)}
               activeOpacity={0.8}
             >
               <View style={styles.optRow}>
-                {/* 左侧图标 */}
-                <View style={[styles.optIcon, { backgroundColor: suggestion.type === 'must_do' ? colors.primary + '18' : colors.outlineVariant + '40' }]}>
+                {/* 左侧图标：圆形 40x40 */}
+                <View style={[
+                  styles.optIcon,
+                  {
+                    backgroundColor: suggestion.type === 'must_do'
+                      ? '#E8F5E9'
+                      : '#FFF3E0',
+                  },
+                ]}>
                   <MaterialIcons
                     name={suggestion.type === 'must_do' ? 'priority-high' : 'checklist'}
                     size={20}
-                    color={suggestion.type === 'must_do' ? colors.primary : colors.onSurfaceVariant}
+                    color={suggestion.type === 'must_do' ? colors.primary : colors.warmAmber}
                   />
                 </View>
 
@@ -127,11 +131,19 @@ export default function ResultScreen() {
                     {/* 必做/备选 pill */}
                     <View style={[
                       styles.typePill,
-                      { backgroundColor: suggestion.type === 'must_do' ? colors.primary : colors.surfaceContainer },
+                      {
+                        backgroundColor: suggestion.type === 'must_do'
+                          ? '#FFEBEE'
+                          : colors.surfaceContainer,
+                      },
                     ]}>
                       <Text style={[
                         styles.typePillText,
-                        { color: suggestion.type === 'must_do' ? colors.onPrimary : colors.onSurfaceVariant },
+                        {
+                          color: suggestion.type === 'must_do'
+                            ? '#D32F2F'
+                            : colors.onSurfaceVariant,
+                        },
                       ]}>
                         {suggestion.type === 'must_do' ? '必做' : '备选'}
                       </Text>
@@ -143,11 +155,8 @@ export default function ResultScreen() {
                         {suggestion.difficulty === 'easy' ? '简单' : '中等'}
                       </Text>
                     </View>
-                    {/* 预估时间 */}
-                    <View style={styles.tagItem}>
-                      <MaterialIcons name="timer" size={14} color={colors.onSurfaceVariant} />
-                      <Text style={styles.tagText}>{suggestion.time_cost}</Text>
-                    </View>
+                    {/* 置信度标签 */}
+                    <ConfidenceBadge confidence={isHighConfidence ? 0.92 : 0.65} />
                   </View>
                 </View>
 
@@ -157,11 +166,14 @@ export default function ResultScreen() {
           );
         })}
 
-        {/* ── 氛围提示：独立卡片（浅蓝色背景） ── */}
+        {/* ── 氛围提示：独立卡片（浅蓝色背景） + 标题 ── */}
         {result.lighting === 'dim' && (
           <View style={styles.ambianceCard}>
+            <Text style={styles.ambianceTitle}>氛围提示：黄金比例法</Text>
             <View style={styles.ambianceRow}>
-              <MaterialIcons name="lightbulb" size={20} color={colors.warmAmber} />
+              <View style={styles.ambianceIconWrap}>
+                <MaterialIcons name="lightbulb" size={20} color={colors.warmAmber} />
+              </View>
               <Text style={styles.ambianceText}>拉开窗帘，打开主灯，房间会显得更宽敞</Text>
             </View>
           </View>
@@ -229,60 +241,60 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  // 图片底部信息条
+  photoInfoBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  photoInfoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  photoInfoText: {
+    fontFamily: 'BeVietnamPro_500Medium',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurfaceVariant,
+  },
+  photoInfoPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.surfaceContainer,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+  },
+  photoInfoPillText: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.labelCaps.fontSize,
+    color: colors.onSurfaceVariant,
+  },
 
-  // ── 纠错按钮 ──
+  // ── 纠错按钮（金色 #FFC940） ──
   correctionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.warmAmber + '18',
+    backgroundColor: '#FFC940',
     borderRadius: radius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
+    paddingVertical: 12,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.lg,
     gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.warmAmber + '40',
   },
   correctionText: {
     fontFamily: 'BeVietnamPro_600SemiBold',
     fontSize: typography.bodyMd.fontSize,
     color: colors.onSurface,
     flex: 1,
-  },
-
-  // ── 摘要栏 ──
-  summaryBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    marginBottom: spacing.xl,
-  },
-  summaryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  summaryText: {
-    fontFamily: 'BeVietnamPro_500Medium',
-    fontSize: typography.bodyMd.fontSize,
-    color: colors.onSurfaceVariant,
-  },
-  summaryPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.paperWhite,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: radius.full,
-  },
-  summaryPillText: {
-    fontFamily: 'BeVietnamPro_600SemiBold',
-    fontSize: typography.labelCaps.fontSize,
-    color: colors.onSurfaceVariant,
   },
 
   // ── 优化清单 ──
@@ -296,7 +308,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paperWhite,
     borderRadius: radius.lg,
     padding: spacing.md,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.sm + 4,
     ...shadows.card,
   },
   optRow: {
@@ -307,7 +319,7 @@ const styles = StyleSheet.create({
   optIcon: {
     width: 40,
     height: 40,
-    borderRadius: radius.md,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -328,8 +340,8 @@ const styles = StyleSheet.create({
   },
   typePill: {
     paddingHorizontal: 10,
-    paddingVertical: 2,
-    borderRadius: radius.full,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   typePillText: {
     fontFamily: 'BeVietnamPro_700Bold',
@@ -346,23 +358,38 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
   },
 
-  // ── 氛围提示（浅蓝色独立卡片） ──
+  // ── 氛围提示（浅蓝色独立卡片 + 标题） ──
   ambianceCard: {
-    backgroundColor: colors.softBlue + '30',
+    backgroundColor: '#F0F9FF',
     borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
+  },
+  ambianceTitle: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurface,
+    marginBottom: spacing.sm,
   },
   ambianceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
+  ambianceIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#E3F2FD',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   ambianceText: {
     fontFamily: 'BeVietnamPro_400Regular',
     fontSize: typography.bodyMd.fontSize,
     color: colors.onSurfaceVariant,
     flex: 1,
+    lineHeight: 22,
   },
 
   // ── 底部按钮 ──
@@ -371,7 +398,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
-    borderRadius: radius.full,
+    borderRadius: 24,
     paddingVertical: spacing.md,
     marginTop: spacing.md,
     gap: spacing.sm,
