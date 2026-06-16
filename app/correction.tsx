@@ -43,63 +43,84 @@ export default function CorrectionScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* 顶部 */}
+      {/* 顶部导航栏 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
         </TouchableOpacity>
-        <Text style={styles.title}>手动选择场景</Text>
-        <View style={styles.backBtn} />
+        <Text style={styles.headerTitle}>TidyZen</Text>
+        <View style={styles.avatarPlaceholder}>
+          <MaterialIcons name="person" size={20} color={colors.onSurfaceVariant} />
+        </View>
       </View>
 
-      <Text style={styles.subtitle}>AI 可能没看准，告诉我们你真正想整理什么？</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* 标题提示区 */}
+        <View style={styles.titleSection}>
+          <Text style={styles.mainTitle}>选择你房间的问题</Text>
+          <Text style={styles.subTitle}>
+            AI 可能没看准，告诉我们你真正想整理什么？
+          </Text>
+        </View>
 
-      {/* 场景网格 */}
-      <ScrollView contentContainerStyle={styles.grid} showsVerticalScrollIndicator={false}>
-        {SCENES.map((scene) => {
-          const selected = selectedScenarios.includes(scene.id);
-          return (
-            <TouchableOpacity
-              key={scene.id}
-              style={[styles.sceneCard, selected && styles.sceneCardSelected]}
-              onPress={() => toggleScene(scene.id)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.sceneIconWrap, selected && { backgroundColor: colors.primaryContainer + '60' }]}>
-                <MaterialIcons
-                  name={scene.icon as any}
-                  size={28}
-                  color={selected ? colors.primary : colors.onSurfaceVariant}
-                />
-              </View>
-              <Text style={[styles.sceneName, selected && styles.sceneNameSelected]}>
-                {scene.name}
-              </Text>
-              <Text style={styles.sceneDesc}>{scene.description}</Text>
-              {selected && (
-                <View style={styles.checkMark}>
-                  <MaterialIcons name="check" size={14} color={colors.onPrimary} />
+        {/* 场景网格 */}
+        <View style={styles.grid}>
+          {SCENES.map((scene) => {
+            const selected = selectedScenarios.includes(scene.id);
+            return (
+              <TouchableOpacity
+                key={scene.id}
+                style={[styles.sceneCard, selected && styles.sceneCardSelected]}
+                onPress={() => toggleScene(scene.id)}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.sceneIconWrap,
+                    selected && styles.sceneIconWrapSelected,
+                  ]}
+                >
+                  <MaterialIcons
+                    name={scene.icon as any}
+                    size={24}
+                    color={selected ? colors.paperWhite : colors.onSurfaceVariant}
+                  />
                 </View>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+                <Text style={[styles.sceneName, selected && styles.sceneNameSelected]}>
+                  {scene.name}
+                </Text>
+                <Text style={styles.sceneDesc}>{scene.description}</Text>
+                {selected && (
+                  <View style={styles.checkMark}>
+                    <MaterialIcons name="check" size={14} color={colors.onPrimary} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </ScrollView>
 
       {/* 底部确认按钮 */}
       <SafeAreaView edges={['bottom']}>
-        <TouchableOpacity
-          style={[styles.confirmButton, selectedScenarios.length === 0 && styles.confirmButtonDisabled]}
-          onPress={handleConfirm}
-          activeOpacity={0.8}
-          disabled={selectedScenarios.length === 0}
-        >
-          <Text style={styles.confirmText}>
-            {selectedScenarios.length > 0
-              ? `确认场景，重新分析（已选 ${selectedScenarios.length}/2）`
-              : '请选择场景'}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.bottomArea}>
+          <TouchableOpacity
+            style={[
+              styles.confirmButton,
+              selectedScenarios.length === 0 && styles.confirmButtonDisabled,
+            ]}
+            onPress={handleConfirm}
+            activeOpacity={0.8}
+            disabled={selectedScenarios.length === 0}
+          >
+            <Text style={styles.confirmText}>
+              {selectedScenarios.length > 0
+                ? `确认场景，重新分析（已选 ${selectedScenarios.length}/2）`
+                : '请选择场景'}
+            </Text>
+            <MaterialIcons name="auto-awesome" size={20} color={colors.onPrimary} style={{ marginLeft: 4 }} />
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     </SafeAreaView>
   );
@@ -107,70 +128,127 @@ export default function CorrectionScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
+
+  // 顶部导航栏
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.pageMargin, paddingVertical: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.pageMargin,
+    paddingVertical: spacing.md,
   },
-  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: {
+  backBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
     fontFamily: 'BeVietnamPro_700Bold',
     fontSize: typography.headlineMd.fontSize,
     color: colors.onSurface,
   },
-  subtitle: {
-    fontFamily: 'BeVietnamPro_400Regular',
-    fontSize: typography.bodyMd.fontSize,
-    color: colors.onSurfaceVariant,
+  avatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surfaceContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  scrollContent: {
     paddingHorizontal: spacing.pageMargin,
+    paddingBottom: 20,
+  },
+
+  // 标题提示区
+  titleSection: {
     marginBottom: spacing.lg,
   },
+  mainTitle: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: 24,
+    color: colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  subTitle: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: 14,
+    color: colors.onSurfaceVariant,
+  },
+
+  // 场景网格
   grid: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    paddingHorizontal: spacing.pageMargin, gap: spacing.sm,
-    paddingBottom: 100,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: spacing.md,
   },
   sceneCard: {
     width: '47%',
     backgroundColor: colors.paperWhite,
     borderRadius: radius.lg,
     padding: spacing.md,
-    borderWidth: 2, borderColor: 'transparent',
+    borderWidth: 2,
+    borderColor: 'transparent',
     position: 'relative',
     ...shadows.card,
   },
   sceneCardSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryContainer + '25',
+    borderColor: '#2D6E4E',
+    backgroundColor: '#E6F7F0',
   },
   sceneIconWrap: {
-    width: 48, height: 48, borderRadius: radius.lg,
-    backgroundColor: colors.surfaceContainer,
-    alignItems: 'center', justifyContent: 'center',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F5F5F5',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.sm,
   },
-  sceneName: {
-    fontFamily: 'BeVietnamPro_600SemiBold',
-    fontSize: typography.bodyMd.fontSize,
-    color: colors.onSurface,
+  sceneIconWrapSelected: {
+    backgroundColor: '#2D6E4E',
   },
-  sceneNameSelected: { color: colors.primary },
+  sceneName: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: 16,
+    color: colors.onSurface,
+    marginBottom: 2,
+  },
+  sceneNameSelected: {
+    color: '#2D6E4E',
+  },
   sceneDesc: {
     fontFamily: 'BeVietnamPro_400Regular',
-    fontSize: typography.labelCaps.fontSize,
-    color: colors.onSurfaceVariant,
-    marginTop: 2,
+    fontSize: 12,
+    color: '#888888',
   },
   checkMark: {
-    position: 'absolute', top: 10, right: 10,
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: colors.primary,
-    alignItems: 'center', justifyContent: 'center',
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#2D6E4E',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // 底部确认按钮
+  bottomArea: {
+    paddingHorizontal: spacing.pageMargin,
+    paddingBottom: spacing.md,
   },
   confirmButton: {
-    backgroundColor: colors.primary,
-    marginHorizontal: spacing.pageMargin,
-    borderRadius: radius.full, padding: spacing.md,
-    marginBottom: spacing.md, alignItems: 'center',
+    flexDirection: 'row',
+    backgroundColor: '#2D6E4E',
+    borderRadius: radius.full,
+    padding: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   confirmButtonDisabled: { opacity: 0.4 },
   confirmText: {

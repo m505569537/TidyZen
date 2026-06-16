@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius } from '../constants/theme';
@@ -8,20 +8,41 @@ import { analyzeImage } from '../services/ai';
 
 export default function AnalyzingScreen() {
   const { photoBase64, setResult } = useAnalysisStore();
-  const spinAnim = useRef(new Animated.Value(0)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const [percentage, setPercentage] = useState(0);
 
+  // Progress animation: 0% -> 100% over ~3 seconds, looping
   useEffect(() => {
-    const spin = Animated.loop(
-      Animated.timing(spinAnim, {
-        toValue: 1,
-        duration: 1200,
-        useNativeDriver: true,
-      })
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(progressAnim, {
+          toValue: 100,
+          duration: 3000,
+          easing: Easing.linear,
+          useNativeDriver: false,
+        }),
+        Animated.timing(progressAnim, {
+          toValue: 0,
+          duration: 300,
+          easing: Easing.linear,
+          useNativeDriver: false,
+        }),
+      ]),
     );
-    spin.start();
-    return () => spin.stop();
-  }, [spinAnim]);
+    anim.start();
 
+    // Update percentage display
+    const listener = progressAnim.addListener(({ value }) => {
+      setPercentage(Math.round(value));
+    });
+
+    return () => {
+      anim.stop();
+      progressAnim.removeListener(listener);
+    };
+  }, [progressAnim]);
+
+  // Actual AI analysis
   useEffect(() => {
     if (!photoBase64) {
       router.replace('/camera');
@@ -43,48 +64,49 @@ export default function AnalyzingScreen() {
     return () => clearTimeout(timer);
   }, [photoBase64, setResult]);
 
-  const rotation = spinAnim.interpolate({
-    inputRange: [0, 1],
+  // Interpolate ring rotation for the dashed/dotted progress effect
+  const ringRotation = progressAnim.interpolate({
+    inputRange: [0, 100],
     outputRange: ['0deg', '360deg'],
   });
 
   return (
     <View style={styles.container}>
+      {/* 品牌标识 */}
+      <View style={styles.brandRow}>
+        <Text style={styles.brandText}>TidyZen AI</Text>
+      </View>
+
+      {/* 主体内容居中 */}
       <View style={styles.content}>
-        {/* 旋转加载环 */}
-        <View style={styles.ringOuter}>
-          <Animated.View style={[styles.ringSpinner, { transform: [{ rotate: rotation }] }]} />
-          <View style={styles.ringInner}>
-            <MaterialIcons name="auto-awesome" size={32} color={colors.primary} />
+        {/* 圆形进度面板 */}
+        <View style={styles.progressPanel}>
+          {/* 轨道环 - 薄荷淡绿实心 */}
+          <View style={styles.trackRing} />
+
+          {/* 进度环 - 虚线圆环效果 */}
+          <Animated.View
+            style={[
+              styles.progressRing,
+              { transform: [{ rotate: ringRotation }] },
+            ]}
+          />
+
+          {/* 百分比数字 */}
+          <View style={styles.percentageContainer}>
+            <Text style={styles.percentageText}>{percentage}%</Text>
           </View>
         </View>
 
-        <Text style={styles.mainText}>AI 正在分析你的房间</Text>
-        <Text style={styles.subText}>识别杂物类型与整洁度...</Text>
-
-        {/* 分析步骤提示 */}
-        <View style={styles.stepsRow}>
-          <View style={styles.stepItem}>
-            <MaterialIcons name="check-circle" size={16} color={colors.healingGreen} />
-            <Text style={styles.stepText}>照片已接收</Text>
-          </View>
-          <View style={styles.stepDot} />
-          <View style={styles.stepItem}>
-            <MaterialIcons name="radio-button-checked" size={16} color={colors.primary} />
-            <Text style={[styles.stepText, { color: colors.primary }]}>AI 分析中</Text>
-          </View>
-          <View style={styles.stepDot} />
-          <View style={styles.stepItem}>
-            <MaterialIcons name="radio-button-unchecked" size={16} color={colors.outlineVariant} />
-            <Text style={styles.stepText}>生成建议</Text>
-          </View>
-        </View>
+        {/* 状态文字 */}
+        <Text style={styles.mainText}>AI 正在分析你的房间...</Text>
+        <Text style={styles.subText}>预计还需 3-5 秒</Text>
       </View>
 
       {/* 底部隐私提示 */}
       <View style={styles.privacyFooter}>
         <MaterialIcons name="verified-user" size={16} color={colors.onSurfaceVariant} />
-        <Text style={styles.privacyText}>照片分析后不会保存在云端</Text>
+        <Text style={styles.privacyText}>所有数据均端到端加密</Text>
       </View>
     </View>
   );
@@ -92,29 +114,72 @@ export default function AnalyzingScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, backgroundColor: colors.surface,
-    justifyContent: 'center', alignItems: 'center',
+    flex: 1,
+    backgroundColor: '#E8DDD5',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  content: { alignItems: 'center', gap: spacing.lg },
 
-  // 加载环
-  ringOuter: {
-    width: 120, height: 120, borderRadius: radius.full,
-    alignItems: 'center', justifyContent: 'center',
-    position: 'relative',
-  },
-  ringSpinner: {
+  // 品牌
+  brandRow: {
     position: 'absolute',
-    width: 120, height: 120, borderRadius: radius.full,
-    borderWidth: 3,
-    borderColor: 'transparent',
-    borderTopColor: colors.primary,
-    borderRightColor: colors.primaryContainer,
+    top: 60,
+    left: spacing.pageMargin,
   },
-  ringInner: {
-    width: 88, height: 88, borderRadius: radius.full,
-    backgroundColor: colors.primaryContainer + '30',
-    alignItems: 'center', justifyContent: 'center',
+  brandText: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.bodyLg.fontSize,
+    color: colors.onSurface,
+    opacity: 0.7,
+  },
+
+  // 主体内容
+  content: {
+    alignItems: 'center',
+    gap: spacing.lg,
+  },
+
+  // 进度面板
+  progressPanel: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: colors.paperWhite,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 5,
+  },
+  trackRing: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 6,
+    borderColor: '#b1f0ce',
+  },
+  progressRing: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 6,
+    borderColor: 'transparent',
+    borderTopColor: colors.primaryDark,
+    borderRightColor: colors.primary,
+  },
+  percentageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  percentageText: {
+    fontFamily: 'BeVietnamPro_800ExtraBold',
+    fontSize: 40,
+    color: colors.primaryDark,
+    lineHeight: 48,
   },
 
   // 文字
@@ -128,32 +193,21 @@ const styles = StyleSheet.create({
     fontFamily: 'BeVietnamPro_400Regular',
     fontSize: typography.bodyMd.fontSize,
     color: colors.onSurfaceVariant,
+    opacity: 0.7,
   },
 
-  // 步骤
-  stepsRow: {
-    flexDirection: 'row', alignItems: 'center',
-    marginTop: spacing.lg, gap: spacing.sm,
-  },
-  stepItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  stepText: {
-    fontFamily: 'BeVietnamPro_400Regular',
-    fontSize: typography.labelCaps.fontSize,
-    color: colors.onSurfaceVariant,
-  },
-  stepDot: {
-    width: 4, height: 4, borderRadius: 2,
-    backgroundColor: colors.outlineVariant,
-  },
-
-  // 隐私
+  // 底部隐私提示
   privacyFooter: {
-    position: 'absolute', bottom: 48,
-    flexDirection: 'row', alignItems: 'center', gap: spacing.xs,
+    position: 'absolute',
+    bottom: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   privacyText: {
     fontFamily: 'BeVietnamPro_400Regular',
     fontSize: typography.labelCaps.fontSize,
     color: colors.onSurfaceVariant,
+    opacity: 0.7,
   },
 });

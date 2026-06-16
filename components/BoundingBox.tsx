@@ -7,14 +7,18 @@ interface BoundingBoxProps {
   label: string;
   containerWidth: number;
   containerHeight: number;
+  /** Optional color override for border/fill/label. Defaults to softBlue. */
+  color?: string;
 }
 
-export function BoundingBox({ bbox, label, containerWidth, containerHeight }: BoundingBoxProps) {
+export function BoundingBox({ bbox, label, containerWidth, containerHeight, color }: BoundingBoxProps) {
   const [x, y, w, h] = bbox;
   const left = x * containerWidth;
   const top = y * containerHeight;
   const width = w * containerWidth;
   const height = h * containerHeight;
+
+  const boxColor = color ?? colors.softBlue;
 
   return (
     <View
@@ -25,10 +29,12 @@ export function BoundingBox({ bbox, label, containerWidth, containerHeight }: Bo
           top,
           width,
           height,
+          borderColor: boxColor,
+          backgroundColor: boxColor + '1A', // ~10% opacity
         },
       ]}
     >
-      <View style={styles.labelContainer}>
+      <View style={[styles.labelContainer, { backgroundColor: boxColor }]}>
         <Text style={styles.label}>{label}</Text>
       </View>
     </View>
@@ -39,15 +45,12 @@ const styles = StyleSheet.create({
   box: {
     position: 'absolute',
     borderWidth: 2,
-    borderColor: colors.softBlue,
-    backgroundColor: colors.softBlue + '26', // 15% opacity
     borderRadius: radius.sm,
   },
   labelContainer: {
     position: 'absolute',
     top: -20,
     left: -2,
-    backgroundColor: colors.softBlue,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: radius.full,

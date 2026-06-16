@@ -6,6 +6,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRef, useState } from 'react';
 import { colors, typography, spacing, radius } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
+import { BoundingBox } from '../components';
 
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -25,7 +26,7 @@ export default function CameraScreen() {
   if (!permission.granted) {
     return (
       <SafeAreaView style={styles.permissionScreen} edges={['top', 'bottom']}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <TouchableOpacity style={styles.permissionBackBtn} onPress={handleBack}>
           <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
         </TouchableOpacity>
         <View style={styles.permissionContainer}>
@@ -61,48 +62,101 @@ export default function CameraScreen() {
     return <View style={styles.container} />;
   }
 
+  // Sample bounding boxes for demo (would come from real-time detection in production)
+  const demoBoxes = [
+    { bbox: [0.15, 0.3, 0.28, 0.22] as [number, number, number, number], label: '纸箱 42%', color: '#90CAF9' },
+    { bbox: [0.5, 0.25, 0.3, 0.25] as [number, number, number, number], label: '衣物 28%', color: '#A5D6A7' },
+  ];
+
   return (
     <View style={styles.container}>
       <CameraView ref={cameraRef} style={styles.camera} facing="back">
-        {/* 顶部导航栏 */}
+        {/* 顶部控制区 */}
         <SafeAreaView edges={['top']}>
           <View style={styles.topBar}>
-            <TouchableOpacity style={styles.iconBtn} onPress={handleBack}>
-              <MaterialIcons name="close" size={24} color={colors.paperWhite} />
+            {/* 左侧关闭按钮 */}
+            <TouchableOpacity style={styles.closeButton} onPress={handleBack}>
+              <MaterialIcons name="close" size={20} color={colors.onSurface} />
             </TouchableOpacity>
-            <View style={styles.titleBadge}>
-              <MaterialIcons name="auto-awesome" size={16} color={colors.paperWhite} />
-              <Text style={styles.title}>智能分析</Text>
+
+            {/* 中央实时整洁度卡片 */}
+            <View style={styles.tidinessCard}>
+              <View style={styles.tidinessIconWrap}>
+                <MaterialIcons name="check-circle" size={18} color="#2E7D32" />
+              </View>
+              <View style={styles.tidinessTextWrap}>
+                <Text style={styles.tidinessLabel}>实时整洁度</Text>
+                <View style={styles.tidinessValueRow}>
+                  <Text style={styles.tidinessScore}>85</Text>
+                  <MaterialIcons name="trending-up" size={14} color="#2E7D32" />
+                </View>
+              </View>
             </View>
-            <View style={styles.iconBtn} />
+
+            {/* 右侧占位保持居中 */}
+            <View style={styles.closeButton} />
           </View>
         </SafeAreaView>
 
-        {/* 取景框引导 */}
+        {/* 取景引导 + AI识别框 */}
         <View style={styles.guideOverlay}>
+          {/* AI 物品识别框 */}
+          <View style={styles.bboxContainer}>
+            {demoBoxes.map((box, i) => (
+              <BoundingBox
+                key={i}
+                bbox={box.bbox}
+                label={box.label}
+                containerWidth={280}
+                containerHeight={280}
+                color={box.color}
+              />
+            ))}
+          </View>
+
+          {/* L型直角角标 */}
           <View style={styles.guideFrame}>
             <View style={[styles.corner, styles.cornerTL]} />
             <View style={[styles.corner, styles.cornerTR]} />
             <View style={[styles.corner, styles.cornerBL]} />
             <View style={[styles.corner, styles.cornerBR]} />
           </View>
-          <View style={styles.guideTextWrap}>
+
+          {/* 淡绿色水平引导线 */}
+          <View style={styles.guideLines}>
+            <View style={styles.guideLineH} />
+            <View style={styles.guideLineH} />
+          </View>
+
+          {/* 操作引导提示 */}
+          <View style={styles.instructionBar}>
             <MaterialIcons name="info-outline" size={16} color={colors.paperWhite} />
-            <Text style={styles.guideText}>将房间杂乱区域放入取景框内</Text>
+            <Text style={styles.instructionText}>请将镜头对准房间杂乱区域</Text>
           </View>
         </View>
 
         {/* 底部控制栏 */}
         <SafeAreaView edges={['bottom']}>
           <View style={styles.bottomBar}>
+            {/* 左侧相册按钮 */}
             <TouchableOpacity style={styles.sideButton}>
-              <MaterialIcons name="photo-library" size={26} color={colors.paperWhite} />
+              <MaterialIcons name="photo-library" size={24} color={colors.onSurface} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.shutterButton} onPress={takePicture} activeOpacity={0.7}>
-              <View style={styles.shutterInner} />
+
+            {/* 中央扫描按钮 */}
+            <TouchableOpacity
+              style={styles.shutterOuter}
+              onPress={takePicture}
+              activeOpacity={0.7}
+            >
+              <View style={styles.shutterInner}>
+                <MaterialIcons name="center-focus-strong" size={28} color="#2E7D32" />
+              </View>
             </TouchableOpacity>
+
+            {/* 右侧闪光灯按钮 */}
             <TouchableOpacity style={styles.sideButton}>
-              <MaterialIcons name="flash-auto" size={26} color={colors.paperWhite} />
+              <MaterialIcons name="flash-auto" size={24} color={colors.onSurface} />
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -115,93 +169,182 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   camera: { flex: 1 },
 
-  // 顶部
+  // 顶部控制区
   topBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.md, paddingTop: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
   },
-  iconBtn: {
-    width: 40, height: 40, borderRadius: radius.full,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    alignItems: 'center', justifyContent: 'center',
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.paperWhite,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  titleBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2,
-    borderRadius: radius.full,
+  tidinessCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 44,
+    backgroundColor: colors.paperWhite,
+    borderRadius: 22,
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  title: {
-    fontFamily: 'BeVietnamPro_600SemiBold',
-    fontSize: typography.bodyMd.fontSize,
-    color: colors.paperWhite,
+  tidinessIconWrap: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tidinessTextWrap: {
+    alignItems: 'flex-start',
+  },
+  tidinessLabel: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    lineHeight: 14,
+  },
+  tidinessValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  tidinessScore: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: 18,
+    color: colors.onSurface,
+    lineHeight: 22,
   },
 
-  // 取景引导
+  // 取景引导 + AI识别框
   guideOverlay: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bboxContainer: {
+    width: 280,
+    height: 280,
+    position: 'absolute',
   },
   guideFrame: {
-    width: 280, height: 280,
-    position: 'relative',
+    width: 280,
+    height: 280,
+    position: 'absolute',
   },
   corner: {
     position: 'absolute',
-    width: 32, height: 32,
+    width: 32,
+    height: 32,
     borderColor: colors.paperWhite,
   },
   cornerTL: { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3, borderRadius: 4 },
   cornerTR: { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3, borderRadius: 4 },
   cornerBL: { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3, borderRadius: 4 },
   cornerBR: { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3, borderRadius: 4 },
-  guideTextWrap: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
-    borderRadius: radius.full,
-    marginTop: spacing.lg,
+
+  // 淡绿色水平引导线
+  guideLines: {
+    width: 280,
+    height: 280,
+    position: 'absolute',
+    justifyContent: 'space-around',
   },
-  guideText: {
+  guideLineH: {
+    height: 1,
+    backgroundColor: '#A5D6A7',
+    opacity: 0.4,
+    marginHorizontal: 32,
+  },
+
+  // 操作引导提示
+  instructionBar: {
+    position: 'absolute',
+    bottom: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(93, 93, 93, 0.8)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: radius.full,
+  },
+  instructionText: {
     fontFamily: 'BeVietnamPro_400Regular',
     fontSize: typography.bodyMd.fontSize,
     color: colors.paperWhite,
   },
 
-  // 底部
+  // 底部控制栏
   bottomBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
-    paddingHorizontal: spacing.xl, paddingBottom: spacing.lg, paddingTop: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.lg,
+    paddingTop: spacing.md,
   },
   sideButton: {
-    width: 48, height: 48, borderRadius: radius.full,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    alignItems: 'center', justifyContent: 'center',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E0E0E0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  shutterButton: {
-    width: 76, height: 76, borderRadius: radius.full,
-    borderWidth: 4, borderColor: colors.paperWhite,
-    alignItems: 'center', justifyContent: 'center',
+  shutterOuter: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
+    borderColor: '#E0E0E0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   shutterInner: {
-    width: 60, height: 60, borderRadius: radius.full,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: colors.paperWhite,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // 权限页
   permissionScreen: { flex: 1, backgroundColor: colors.surface },
-  backButton: {
-    width: 40, height: 40, borderRadius: radius.full,
-    alignItems: 'center', justifyContent: 'center',
-    marginLeft: spacing.md, marginTop: spacing.sm,
+  permissionBackBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: spacing.md,
+    marginTop: spacing.sm,
   },
   permissionContainer: {
-    flex: 1, alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: spacing.xl, gap: spacing.md,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+    gap: spacing.md,
   },
   permissionIconWrap: {
-    width: 96, height: 96, borderRadius: radius.xl,
+    width: 96,
+    height: 96,
+    borderRadius: radius.xl,
     backgroundColor: colors.primaryContainer + '40',
-    alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.md,
   },
   permissionTitle: {
@@ -213,12 +356,15 @@ const styles = StyleSheet.create({
     fontFamily: 'BeVietnamPro_400Regular',
     fontSize: typography.bodyMd.fontSize,
     color: colors.onSurfaceVariant,
-    textAlign: 'center', lineHeight: 24,
+    textAlign: 'center',
+    lineHeight: 24,
   },
   permissionButton: {
     backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xl, paddingVertical: spacing.md,
-    borderRadius: radius.full, marginTop: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: radius.full,
+    marginTop: spacing.sm,
   },
   permissionButtonText: {
     fontFamily: 'BeVietnamPro_600SemiBold',
