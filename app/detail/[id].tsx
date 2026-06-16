@@ -23,6 +23,7 @@ export default function DetailScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* 顶部导航 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
@@ -31,31 +32,42 @@ export default function DetailScreen() {
         <View style={styles.backBtn} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* 标题区域 */}
         <View style={styles.titleSection}>
-          <View style={[styles.typeBadge, { backgroundColor: suggestion.type === 'must_do' ? colors.primary : colors.outlineVariant }]}>
-            <Text style={[styles.typeText, { color: suggestion.type === 'must_do' ? colors.onPrimary : colors.onSurfaceVariant }]}>
+          <View style={[styles.typeBadge, {
+            backgroundColor: suggestion.type === 'must_do' ? colors.primary : colors.outlineVariant
+          }]}>
+            <Text style={[styles.typeText, {
+              color: suggestion.type === 'must_do' ? colors.onPrimary : colors.onSurfaceVariant
+            }]}>
               {suggestion.type === 'must_do' ? '必做' : '备选'}
             </Text>
           </View>
           <Text style={styles.title}>{suggestion.title}</Text>
         </View>
 
+        {/* 元信息行 */}
         <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
+          <View style={styles.metaChip}>
             <MaterialIcons name="timer" size={16} color={colors.onSurfaceVariant} />
             <Text style={styles.metaText}>{suggestion.time_cost}</Text>
           </View>
-          <View style={styles.metaItem}>
+          <View style={styles.metaChip}>
             <MaterialIcons name="star" size={16} color={colors.warmAmber} />
-            <Text style={styles.metaText}>{suggestion.difficulty === 'easy' ? '⭐ 简单' : '⭐⭐ 中等'}</Text>
+            <Text style={styles.metaText}>
+              {suggestion.difficulty === 'easy' ? '简单' : '中等'}
+            </Text>
           </View>
-          <View style={styles.metaItem}>
+          <View style={styles.metaChip}>
             <MaterialIcons name="inventory-2" size={16} color={colors.onSurfaceVariant} />
-            <Text style={styles.metaText}>{suggestion.items_needed.length === 0 ? '零成本' : suggestion.items_needed.join(', ')}</Text>
+            <Text style={styles.metaText}>
+              {suggestion.items_needed.length === 0 ? '零成本' : suggestion.items_needed.join(', ')}
+            </Text>
           </View>
         </View>
 
+        {/* 操作步骤 */}
         <Text style={styles.sectionTitle}>操作步骤</Text>
         {steps.map((step, index) => (
           <View key={index} style={styles.stepCard}>
@@ -66,16 +78,19 @@ export default function DetailScreen() {
           </View>
         ))}
 
+        {/* 验收标准 */}
         <View style={styles.criteriaCard}>
           <MaterialIcons name="verified" size={20} color={colors.healingGreen} />
           <Text style={styles.criteriaText}>验收标准：{suggestion.acceptance_criteria}</Text>
         </View>
 
+        {/* 预期效果 */}
         <View style={styles.effectCard}>
           <Text style={styles.effectLabel}>预期效果</Text>
           <Text style={styles.effectValue}>{suggestion.expected_effect}</Text>
         </View>
 
+        {/* 视频教程按钮 */}
         <Button
           title="查看视频教程（15秒）"
           onPress={() => router.push(`/video/${id}`)}
@@ -89,25 +104,108 @@ export default function DetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.pageMargin, paddingVertical: spacing.md },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: spacing.pageMargin, paddingVertical: spacing.md,
+  },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: typography.headlineMd.fontSize, color: colors.onSurface },
+  headerTitle: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.headlineMd.fontSize,
+    color: colors.onSurface,
+  },
   scrollContent: { padding: spacing.pageMargin, paddingBottom: 60 },
+
+  // 标题
   titleSection: { marginBottom: spacing.lg },
-  typeBadge: { alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 3, borderRadius: radius.full, marginBottom: spacing.sm },
-  typeText: { fontFamily: 'BeVietnamPro_700Bold', fontSize: typography.labelCaps.fontSize },
-  title: { fontFamily: 'BeVietnamPro_700Bold', fontSize: typography.headlineLg.fontSize, color: colors.onSurface },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.lg, marginBottom: spacing.xl },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  metaText: { fontFamily: 'BeVietnamPro_400Regular', fontSize: typography.bodyMd.fontSize, color: colors.onSurfaceVariant },
-  sectionTitle: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: typography.headlineMd.fontSize, color: colors.onSurface, marginBottom: spacing.md },
-  stepCard: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: colors.paperWhite, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, gap: spacing.md, ...shadows.card },
-  stepNumber: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
-  stepNumberText: { fontFamily: 'BeVietnamPro_700Bold', fontSize: typography.bodyMd.fontSize, color: colors.onPrimary },
-  stepText: { fontFamily: 'BeVietnamPro_400Regular', fontSize: typography.bodyMd.fontSize, color: colors.onSurface, flex: 1, lineHeight: 24 },
-  criteriaCard: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: colors.healingGreen + '15', borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.md, gap: spacing.sm },
-  criteriaText: { fontFamily: 'BeVietnamPro_400Regular', fontSize: typography.bodyMd.fontSize, color: colors.onSurface, flex: 1, lineHeight: 24 },
-  effectCard: { backgroundColor: colors.primaryContainer + '30', borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg, alignItems: 'center' },
-  effectLabel: { fontFamily: 'BeVietnamPro_400Regular', fontSize: typography.labelCaps.fontSize, color: colors.onSurfaceVariant },
-  effectValue: { fontFamily: 'BeVietnamPro_700Bold', fontSize: typography.headlineMd.fontSize, color: colors.primary, marginTop: 2 },
+  typeBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12, paddingVertical: 3,
+    borderRadius: radius.full, marginBottom: spacing.sm,
+  },
+  typeText: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.labelCaps.fontSize,
+  },
+  title: {
+    fontFamily: 'BeVietnamPro_800ExtraBold',
+    fontSize: typography.headlineLg.fontSize,
+    color: colors.onSurface,
+  },
+
+  // 元信息
+  metaRow: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm,
+    marginBottom: spacing.xl,
+  },
+  metaChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: colors.surfaceContainer,
+    paddingHorizontal: spacing.sm + 4, paddingVertical: spacing.xs + 2,
+    borderRadius: radius.full,
+  },
+  metaText: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurfaceVariant,
+  },
+
+  // 步骤
+  sectionTitle: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.headlineMd.fontSize,
+    color: colors.onSurface,
+    marginBottom: spacing.md,
+  },
+  stepCard: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    backgroundColor: colors.paperWhite, borderRadius: radius.lg,
+    padding: spacing.md, marginBottom: spacing.sm,
+    gap: spacing.md, ...shadows.card,
+  },
+  stepNumber: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: colors.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  stepNumberText: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onPrimary,
+  },
+  stepText: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurface, flex: 1, lineHeight: 24,
+  },
+
+  // 验收标准
+  criteriaCard: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    backgroundColor: colors.healingGreen + '15',
+    borderRadius: radius.lg, padding: spacing.md,
+    marginBottom: spacing.md, gap: spacing.sm,
+  },
+  criteriaText: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurface, flex: 1, lineHeight: 24,
+  },
+
+  // 预期效果
+  effectCard: {
+    backgroundColor: colors.primaryContainer + '30',
+    borderRadius: radius.lg, padding: spacing.md,
+    marginBottom: spacing.lg, alignItems: 'center',
+  },
+  effectLabel: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.labelCaps.fontSize,
+    color: colors.onSurfaceVariant,
+  },
+  effectValue: {
+    fontFamily: 'BeVietnamPro_800ExtraBold',
+    fontSize: typography.headlineMd.fontSize,
+    color: colors.primary, marginTop: 2,
+  },
 });

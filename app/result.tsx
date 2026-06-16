@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
+import { ScoreGauge } from '../components';
 
 export default function ResultScreen() {
   const { result, setCorrecting, reset } = useAnalysisStore();
@@ -26,53 +27,61 @@ export default function ResultScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* 顶部导航 */}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* 关闭按钮 */}
         <TouchableOpacity style={styles.closeButton} onPress={() => { reset(); router.replace('/'); }}>
           <MaterialIcons name="close" size={24} color={colors.onSurface} />
         </TouchableOpacity>
 
-        {/* 评分 */}
+        {/* 评分区域 */}
         <View style={styles.scoreSection}>
-          <Text style={styles.scoreLabel}>整洁得分</Text>
-          <Text style={[styles.scoreValue, { color: getScoreColor(result.score) }]}>
-            {result.score}
+          <ScoreGauge score={result.score} size="large" />
+          <Text style={[styles.scoreSub, { color: getScoreColor(result.score) }]}>
+            发现 {result.clutterItems.length} 处可优化区域
           </Text>
-          <Text style={styles.scoreSub}>发现 {result.clutterItems.length} 处可优化区域</Text>
         </View>
 
         {/* 纠错按钮 */}
-        <TouchableOpacity
-          style={styles.correctionButton}
-          onPress={() => { setCorrecting(); router.push('/correction'); }}
-          activeOpacity={0.8}
-        >
-          <MaterialIcons name="touch-app" size={20} color={colors.onSurface} />
-          <Text style={styles.correctionText}>识别不准？点这里手动选择场景</Text>
-        </TouchableOpacity>
+        {result.needsCorrection && (
+          <TouchableOpacity
+            style={styles.correctionButton}
+            onPress={() => { setCorrecting(); router.push('/correction'); }}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="touch-app" size={20} color={colors.onSurface} />
+            <Text style={styles.correctionText}>识别不准？手动选择场景</Text>
+            <MaterialIcons name="chevron-right" size={20} color={colors.onSurfaceVariant} />
+          </TouchableOpacity>
+        )}
 
         {/* 杂物列表 */}
+        <Text style={styles.sectionTitle}>识别结果</Text>
         {result.clutterItems.map((item, index) => {
           const conf = getConfidenceInfo(item.confidence);
           return (
             <View key={index} style={styles.clutterCard}>
-              <View style={styles.clutterHeader}>
-                <MaterialIcons name="inventory-2" size={20} color={colors.primary} />
-                <Text style={styles.clutterName}>{item.display_name}</Text>
-                <View style={[styles.confBadge, { backgroundColor: conf.color + '20' }]}>
-                  <MaterialIcons name={conf.icon} size={14} color={conf.color} />
-                  <Text style={[styles.confText, { color: conf.color }]}>{conf.text}</Text>
+              <View style={styles.clutterLeft}>
+                <View style={[styles.clutterIconWrap, { backgroundColor: conf.color + '20' }]}>
+                  <MaterialIcons name="inventory-2" size={18} color={conf.color} />
+                </View>
+                <View>
+                  <Text style={styles.clutterName}>{item.display_name}</Text>
+                  <Text style={styles.clutterMeta}>
+                    数量 {item.count} · 占比 {Math.round(item.area_ratio * 100)}%
+                  </Text>
                 </View>
               </View>
-              <Text style={styles.clutterMeta}>
-                数量: {item.count} · 占比: {Math.round(item.area_ratio * 100)}%
-              </Text>
+              <View style={[styles.confBadge, { backgroundColor: conf.color + '15' }]}>
+                <MaterialIcons name={conf.icon} size={14} color={conf.color} />
+                <Text style={[styles.confText, { color: conf.color }]}>{conf.text}</Text>
+              </View>
             </View>
           );
         })}
 
         {/* 建议 */}
-        {result.suggestions.map((suggestion, index) => (
+        <Text style={styles.sectionTitle}>整理建议</Text>
+        {result.suggestions.map((suggestion) => (
           <TouchableOpacity
             key={suggestion.id}
             style={styles.suggestionCard}
@@ -93,10 +102,24 @@ export default function ResultScreen() {
               </View>
               <Text style={styles.suggestionTitle}>{suggestion.title}</Text>
             </View>
-            <Text style={styles.suggestionContent} numberOfLines={3}>{suggestion.content}</Text>
+            <Text style={styles.suggestionContent} numberOfLines={2}>{suggestion.content}</Text>
             <View style={styles.suggestionMeta}>
-              <MaterialIcons name="timer" size={14} color={colors.onSurfaceVariant} />
-              <Text style={styles.metaText}>{suggestion.time_cost} · {suggestion.items_needed.length === 0 ? '零成本' : suggestion.items_needed.join(', ')}</Text>
+              <View style={styles.metaItem}>
+                <MaterialIcons name="timer" size={14} color={colors.onSurfaceVariant} />
+                <Text style={styles.metaText}>{suggestion.time_cost}</Text>
+              </View>
+              <View style={styles.metaItem}>
+                <MaterialIcons name="star" size={14} color={colors.warmAmber} />
+                <Text style={styles.metaText}>
+                  {suggestion.difficulty === 'easy' ? '简单' : '中等'}
+                </Text>
+              </View>
+              <View style={styles.metaItem}>
+                <MaterialIcons name="inventory-2" size={14} color={colors.onSurfaceVariant} />
+                <Text style={styles.metaText}>
+                  {suggestion.items_needed.length === 0 ? '零成本' : suggestion.items_needed.join(', ')}
+                </Text>
+              </View>
               <MaterialIcons name="chevron-right" size={20} color={colors.outline} style={{ marginLeft: 'auto' }} />
             </View>
           </TouchableOpacity>
@@ -106,7 +129,7 @@ export default function ResultScreen() {
         {result.lighting === 'dim' && (
           <View style={styles.ambianceTip}>
             <MaterialIcons name="lightbulb" size={18} color={colors.warmAmber} />
-            <Text style={styles.ambianceText}>氛围提示：拉开窗帘，打开主灯，房间会显得更宽敞。</Text>
+            <Text style={styles.ambianceText}>拉开窗帘，打开主灯，房间会显得更宽敞</Text>
           </View>
         )}
 
@@ -116,7 +139,7 @@ export default function ResultScreen() {
           onPress={() => { reset(); router.replace('/camera'); }}
           activeOpacity={0.8}
         >
-          <MaterialIcons name="verified" size={20} color={colors.onPrimary} />
+          <MaterialIcons name="refresh" size={20} color={colors.onPrimary} />
           <Text style={styles.rescanText}>我已完成整理，重新扫描</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -128,46 +151,127 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { padding: spacing.pageMargin, paddingBottom: 40 },
   closeButton: { alignSelf: 'flex-end', padding: spacing.xs, marginBottom: spacing.sm },
+
+  // 评分
   scoreSection: { alignItems: 'center', marginBottom: spacing.lg },
-  scoreLabel: { fontFamily: 'BeVietnamPro_400Regular', fontSize: typography.bodyMd.fontSize, color: colors.onSurfaceVariant },
-  scoreValue: { fontFamily: 'BeVietnamPro_800ExtraBold', fontSize: typography.scoreDisplay.fontSize, lineHeight: typography.scoreDisplay.lineHeight },
-  scoreSub: { fontFamily: 'BeVietnamPro_400Regular', fontSize: typography.bodyMd.fontSize, color: colors.onSurfaceVariant, marginTop: spacing.xs },
+  scoreSub: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    marginTop: spacing.md,
+  },
+
+  // 纠错
   correctionButton: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: colors.warmAmber + '20', borderRadius: radius.md,
-    padding: spacing.md, marginBottom: spacing.lg, gap: spacing.sm,
-    borderWidth: 1, borderColor: colors.warmAmber,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: colors.warmAmber + '18',
+    borderRadius: radius.lg,
+    padding: spacing.md, marginBottom: spacing.xl,
+    gap: spacing.sm,
+    borderWidth: 1, borderColor: colors.warmAmber + '40',
   },
-  correctionText: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: typography.bodyMd.fontSize, color: colors.onSurface },
+  correctionText: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurface, flex: 1,
+  },
+
+  // 区块标题
+  sectionTitle: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.headlineMd.fontSize,
+    color: colors.onSurface,
+    marginBottom: spacing.md,
+  },
+
+  // 杂物卡片
   clutterCard: {
-    backgroundColor: colors.paperWhite, borderRadius: radius.md,
-    padding: spacing.md, marginBottom: spacing.sm, ...shadows.card,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: colors.paperWhite, borderRadius: radius.lg,
+    padding: spacing.md, marginBottom: spacing.sm,
+    ...shadows.card,
   },
-  clutterHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs },
-  clutterName: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: typography.bodyMd.fontSize, color: colors.onSurface, flex: 1 },
-  confBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.full },
+  clutterLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  clutterIconWrap: {
+    width: 36, height: 36, borderRadius: radius.md,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  clutterName: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurface,
+  },
+  clutterMeta: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.labelCaps.fontSize,
+    color: colors.onSurfaceVariant,
+    marginTop: 1,
+  },
+  confBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: radius.full,
+  },
   confText: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: typography.labelCaps.fontSize },
-  clutterMeta: { fontFamily: 'BeVietnamPro_400Regular', fontSize: typography.labelCaps.fontSize, color: colors.onSurfaceVariant, marginLeft: 28 },
+
+  // 建议卡片
   suggestionCard: {
-    backgroundColor: colors.paperWhite, borderRadius: radius.md,
-    padding: spacing.md, marginBottom: spacing.sm, ...shadows.card,
+    backgroundColor: colors.paperWhite, borderRadius: radius.lg,
+    padding: spacing.md, marginBottom: spacing.sm,
+    ...shadows.card,
   },
-  suggestionHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
-  suggestionBadge: { paddingHorizontal: 10, paddingVertical: 2, borderRadius: radius.full },
-  suggestionBadgeText: { fontFamily: 'BeVietnamPro_700Bold', fontSize: typography.labelCaps.fontSize },
-  suggestionTitle: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: typography.bodyLg.fontSize, color: colors.onSurface, flex: 1 },
-  suggestionContent: { fontFamily: 'BeVietnamPro_400Regular', fontSize: typography.bodyMd.fontSize, color: colors.onSurfaceVariant, lineHeight: 22, marginBottom: spacing.sm },
-  suggestionMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  metaText: { fontFamily: 'BeVietnamPro_400Regular', fontSize: typography.labelCaps.fontSize, color: colors.onSurfaceVariant },
+  suggestionHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  suggestionBadge: {
+    paddingHorizontal: 10, paddingVertical: 3,
+    borderRadius: radius.full,
+  },
+  suggestionBadgeText: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.labelCaps.fontSize,
+  },
+  suggestionTitle: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.bodyLg.fontSize,
+    color: colors.onSurface, flex: 1,
+  },
+  suggestionContent: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurfaceVariant,
+    lineHeight: 22, marginBottom: spacing.sm,
+  },
+  suggestionMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  metaText: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.labelCaps.fontSize,
+    color: colors.onSurfaceVariant,
+  },
+
+  // 氛围
   ambianceTip: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.warmAmber + '10',
-    borderRadius: radius.md, padding: spacing.md, gap: spacing.sm, marginBottom: spacing.md,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: colors.warmAmber + '12',
+    borderRadius: radius.lg, padding: spacing.md,
+    gap: spacing.sm, marginBottom: spacing.md,
   },
-  ambianceText: { fontFamily: 'BeVietnamPro_400Regular', fontSize: typography.bodyMd.fontSize, color: colors.onSurfaceVariant, flex: 1 },
+  ambianceText: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurfaceVariant, flex: 1,
+  },
+
+  // 重新扫描
   rescanButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     backgroundColor: colors.primary, borderRadius: radius.full,
     padding: spacing.md, marginTop: spacing.md, gap: spacing.sm,
   },
-  rescanText: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: typography.bodyLg.fontSize, color: colors.onPrimary },
+  rescanText: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.bodyLg.fontSize,
+    color: colors.onPrimary,
+  },
 });

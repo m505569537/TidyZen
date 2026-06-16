@@ -1,24 +1,52 @@
 import { Tabs } from 'expo-router';
+import { View, type ColorValue } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, typography } from '../../constants/theme';
+
+function TabIcon({
+  name,
+  color,
+  size,
+  focused,
+}: {
+  name: React.ComponentProps<typeof MaterialIcons>['name'];
+  color: ColorValue;
+  size: number;
+  focused: boolean;
+}) {
+  return (
+    <View
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: focused ? '#E8F5E9' : 'transparent',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <MaterialIcons name={name} size={size} color={color} />
+    </View>
+  );
+}
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.outline,
+        tabBarActiveTintColor: '#2D6B5B',
+        tabBarInactiveTintColor: '#666666',
         tabBarStyle: {
-          backgroundColor: colors.paperWhite,
-          borderTopColor: colors.outlineVariant,
-          height: 60,
-          paddingBottom: 8,
+          backgroundColor: '#FFFFFF',
+          borderTopColor: '#E0E0E0',
+          borderTopWidth: 1,
+          height: 49,
+          paddingBottom: 4,
           paddingTop: 4,
         },
         tabBarLabelStyle: {
-          fontFamily: 'BeVietnamPro_600SemiBold',
-          fontSize: typography.labelCaps.fontSize,
+          fontFamily: 'BeVietnamPro_400Regular',
+          fontSize: 10,
         },
       }}
     >
@@ -26,8 +54,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: '首页',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="home" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabIcon name="home" color={color} size={size} focused={focused} />
           ),
         }}
       />
@@ -35,8 +63,8 @@ export default function TabLayout() {
         name="scan"
         options={{
           title: '扫描',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="center-focus-strong" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabIcon name="center-focus-strong" color={color} size={size} focused={focused} />
           ),
         }}
       />
@@ -44,17 +72,17 @@ export default function TabLayout() {
         name="history"
         options={{
           title: '记录',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="history" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabIcon name="history" color={color} size={size} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: '我的',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="account-circle" size={size} color={color} />
+          title: '设置',
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabIcon name="settings" color={color} size={size} focused={focused} />
           ),
         }}
       />

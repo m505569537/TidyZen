@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, typography, radius, spacing } from '../constants/theme';
+import { colors, typography, radius, spacing, shadows } from '../constants/theme';
 import { Tag } from './ui/Tag';
 import type { HistoryRecord } from '../types/analysis';
 
@@ -29,13 +29,14 @@ export function RecordCard({ record, onPress }: RecordCardProps) {
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
       {/* 缩略图 */}
       <View style={styles.thumbnail}>
-        <MaterialIcons name="photo" size={32} color={colors.outlineVariant} />
+        <MaterialIcons name="photo" size={28} color={colors.outlineVariant} />
       </View>
 
       {/* 信息区 */}
       <View style={styles.info}>
         <View style={styles.scoreRow}>
-          <Text style={[styles.score, { color: scoreColor }]}>{record.score}分</Text>
+          <Text style={[styles.score, { color: scoreColor }]}>{record.score}</Text>
+          <Text style={[styles.scoreUnit, { color: scoreColor }]}>分</Text>
           {changeColor && (
             <Text style={[styles.change, { color: changeColor }]}>{changeText}</Text>
           )}
@@ -52,7 +53,7 @@ export function RecordCard({ record, onPress }: RecordCardProps) {
         </View>
       </View>
 
-      <MaterialIcons name="chevron-right" size={24} color={colors.outline} />
+      <MaterialIcons name="chevron-right" size={22} color={colors.outline} />
     </TouchableOpacity>
   );
 }
@@ -62,33 +63,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.paperWhite,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: spacing.md,
     marginBottom: spacing.sm,
     gap: spacing.md,
+    ...shadows.card,
   },
   thumbnail: {
-    width: 72,
-    height: 72,
+    width: 64, height: 64,
     borderRadius: radius.md,
     backgroundColor: colors.surfaceContainer,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
   info: { flex: 1, gap: 3 },
-  scoreRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
+  scoreRow: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
   score: {
-    fontFamily: 'BeVietnamPro_700Bold',
+    fontFamily: 'BeVietnamPro_800ExtraBold',
     fontSize: typography.headlineLg.fontSize,
+  },
+  scoreUnit: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
   },
   change: {
     fontFamily: 'BeVietnamPro_600SemiBold',
     fontSize: typography.bodyMd.fontSize,
+    marginLeft: spacing.sm,
   },
   firstTime: {
     fontFamily: 'BeVietnamPro_400Regular',
     fontSize: typography.labelCaps.fontSize,
     color: colors.onSurfaceVariant,
+    marginLeft: spacing.sm,
   },
   date: {
     fontFamily: 'BeVietnamPro_400Regular',
@@ -96,9 +102,7 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
   },
   tags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginTop: 2,
+    flexDirection: 'row', flexWrap: 'wrap',
+    gap: spacing.xs, marginTop: 2,
   },
 });

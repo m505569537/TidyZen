@@ -2,55 +2,57 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius } from '../constants/theme';
+import { colors, typography, spacing, radius, shadows } from '../constants/theme';
+
+interface AccountRowProps {
+  icon: keyof typeof MaterialIcons.glyphMap;
+  label: string;
+  hint: string;
+  onPress?: () => void;
+  danger?: boolean;
+}
+
+function AccountRow({ icon, label, hint, onPress, danger }: AccountRowProps) {
+  return (
+    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.6}>
+      <View style={[styles.iconWrap, danger && { backgroundColor: colors.errorContainer }]}>
+        <MaterialIcons name={icon} size={20} color={danger ? colors.error : colors.primary} />
+      </View>
+      <View style={styles.rowContent}>
+        <Text style={[styles.rowLabel, danger && { color: colors.error }]}>{label}</Text>
+        <Text style={styles.rowHint}>{hint}</Text>
+      </View>
+      <MaterialIcons name="chevron-right" size={22} color={danger ? colors.error : colors.outline} />
+    </TouchableOpacity>
+  );
+}
 
 export default function AccountScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
-          </TouchableOpacity>
-          <Text style={styles.title}>账号与安全</Text>
-          <View style={styles.backBtn} />
+      {/* 顶部 */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
+        </TouchableOpacity>
+        <Text style={styles.title}>账号与安全</Text>
+        <View style={styles.backBtn} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* 安全设置 */}
+        <Text style={styles.sectionLabel}>安全设置</Text>
+        <View style={styles.group}>
+          <AccountRow icon="lock-outline" label="修改密码" hint="上次修改：3 个月前" onPress={() => {}} />
+          <AccountRow icon="mail-outline" label="绑定邮箱" hint="tidyzen@example.com" onPress={() => {}} />
+          <AccountRow icon="phone-iphone" label="设备管理" hint="当前设备：iPhone" onPress={() => {}} />
         </View>
 
-        <TouchableOpacity style={styles.row}>
-          <MaterialIcons name="lock-outline" size={22} color={colors.primary} />
-          <View style={styles.rowContent}>
-            <Text style={styles.rowLabel}>修改密码</Text>
-            <Text style={styles.rowHint}>上次修改：3 个月前</Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={22} color={colors.outline} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.row}>
-          <MaterialIcons name="mail-outline" size={22} color={colors.primary} />
-          <View style={styles.rowContent}>
-            <Text style={styles.rowLabel}>绑定邮箱</Text>
-            <Text style={styles.rowHint}>tidyzen@example.com</Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={22} color={colors.outline} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.row}>
-          <MaterialIcons name="phone-iphone" size={22} color={colors.primary} />
-          <View style={styles.rowContent}>
-            <Text style={styles.rowLabel}>设备管理</Text>
-            <Text style={styles.rowHint}>当前设备：iPhone</Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={22} color={colors.outline} />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.row, styles.dangerRow]}>
-          <MaterialIcons name="delete-forever" size={22} color={colors.error} />
-          <View style={styles.rowContent}>
-            <Text style={[styles.rowLabel, { color: colors.error }]}>注销账号</Text>
-            <Text style={styles.rowHint}>此操作不可撤销</Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={22} color={colors.error} />
-        </TouchableOpacity>
+        {/* 危险操作 */}
+        <Text style={styles.sectionLabel}>危险操作</Text>
+        <View style={styles.group}>
+          <AccountRow icon="delete-forever" label="注销账号" hint="此操作不可撤销" onPress={() => {}} danger />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -59,12 +61,51 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   scrollContent: { padding: spacing.pageMargin, paddingBottom: 60 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: spacing.pageMargin, paddingVertical: spacing.md,
+  },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  title: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: typography.headlineMd.fontSize, color: colors.onSurface },
-  row: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.paperWhite, borderRadius: radius.md, padding: spacing.md, marginBottom: 1, gap: spacing.md },
+  title: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.headlineMd.fontSize,
+    color: colors.onSurface,
+  },
+
+  sectionLabel: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.labelCaps.fontSize,
+    color: colors.onSurfaceVariant,
+    marginBottom: spacing.sm, marginTop: spacing.md,
+    paddingHorizontal: spacing.xs,
+    textTransform: 'uppercase', letterSpacing: 0.6,
+  },
+  group: {
+    backgroundColor: colors.paperWhite, borderRadius: radius.lg,
+    overflow: 'hidden', ...shadows.card,
+  },
+  row: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: spacing.md, paddingHorizontal: spacing.md,
+    gap: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.outlineVariant + '60',
+  },
+  iconWrap: {
+    width: 36, height: 36, borderRadius: radius.md,
+    backgroundColor: colors.primaryContainer + '40',
+    alignItems: 'center', justifyContent: 'center',
+  },
   rowContent: { flex: 1 },
-  rowLabel: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: typography.bodyMd.fontSize, color: colors.onSurface },
-  rowHint: { fontFamily: 'BeVietnamPro_400Regular', fontSize: typography.labelCaps.fontSize, color: colors.onSurfaceVariant, marginTop: 1 },
-  dangerRow: { marginTop: spacing.xl },
+  rowLabel: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurface,
+  },
+  rowHint: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.labelCaps.fontSize,
+    color: colors.onSurfaceVariant,
+    marginTop: 1,
+  },
 });

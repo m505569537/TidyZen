@@ -1,0 +1,11 @@
+{
+  "enabledMcpjsonServers": [
+    "stitch"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m 'fix: prevent ForwardRef error when navigating back from camera *)"
+    ]
+  }
+}

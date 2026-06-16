@@ -1,126 +1,573 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
+import { spacing, radius } from '../../constants/theme';
 
+// ── 设计稿专用色板 ──
+const C = {
+  primary: '#2D6B5B',
+  primaryLight: '#E8F5E9',
+  dangerBg: '#FFF0F0',
+  danger: '#E53935',
+  orange: '#FF9800',
+  grayLight: '#E0E0E0',
+  grayBg: '#F5F5F5',
+  pageBg: '#FFFFFF',       // 纯白底色
+  grayText: '#666666',
+  black: '#000000',
+  white: '#FFFFFF',
+} as const;
+
+// ── 环形进度条（纯 RN，无 SVG 依赖）──
+function CircularProgress({
+  percentage,
+  size = 200,
+  strokeWidth = 24,
+}: {
+  percentage: number;
+  size?: number;
+  strokeWidth?: number;
+}) {
+  const circleRadius = size / 2;
+  const half = size / 2;
+  const innerSize = size - strokeWidth * 2;
+
+  const rightDeg = percentage <= 50 ? (percentage / 50) * 180 : 180;
+  const leftDeg = percentage > 50 ? ((percentage - 50) / 50) * 180 : 0;
+
+  return (
+    <View style={{ width: size, height: size }}>
+      {/* 灰色背景环（15% 未完成部分） */}
+      <View
+        style={{
+          position: 'absolute',
+          width: size,
+          height: size,
+          borderRadius: circleRadius,
+          borderWidth: strokeWidth,
+          borderColor: C.grayLight,
+        }}
+      />
+
+      {/* 右半环进度 */}
+      <View
+        style={{
+          position: 'absolute',
+          width: half,
+          height: size,
+          left: half,
+          overflow: 'hidden',
+        }}
+      >
+        <View
+          style={{
+            width: size,
+            height: size,
+            borderRadius: circleRadius,
+            borderWidth: strokeWidth,
+            borderColor: C.primary,
+            position: 'absolute',
+            left: -half,
+            transform: [{ rotate: `${rightDeg}deg` }],
+          }}
+        />
+      </View>
+
+      {/* 左半环进度（仅 > 50% 可见） */}
+      {percentage > 50 && (
+        <View
+          style={{
+            position: 'absolute',
+            width: half,
+            height: size,
+            overflow: 'hidden',
+          }}
+        >
+          <View
+            style={{
+              width: size,
+              height: size,
+              borderRadius: circleRadius,
+              borderWidth: strokeWidth,
+              borderColor: C.primary,
+              position: 'absolute',
+              transform: [{ rotate: `${leftDeg}deg` }],
+            }}
+          />
+        </View>
+      )}
+
+      {/* 环形内芯白底 */}
+      <View
+        style={{
+          position: 'absolute',
+          width: innerSize,
+          height: innerSize,
+          borderRadius: innerSize / 2,
+          backgroundColor: C.white,
+          top: strokeWidth,
+          left: strokeWidth,
+        }}
+      />
+    </View>
+  );
+}
+
+// ── 垂直渐变（纯 RN 实现：从下到上，银灰冷调 → 白）──
+function VerticalGradient({
+  bottomColor,
+  topColor,
+  height,
+  children,
+}: {
+  bottomColor: string;
+  topColor: string;
+  height: number;
+  children?: React.ReactNode;
+}) {
+  return (
+    <View style={{ height, position: 'relative', overflow: 'hidden' }}>
+      {/* 底色 = bottomColor */}
+      <View style={{ ...StyleSheet.absoluteFill, backgroundColor: bottomColor }} />
+      {/* 上半部分：topColor */}
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          height: '50%',
+          backgroundColor: topColor,
+        }}
+      />
+      {/* 中间过渡带：topColor 半透明叠加 */}
+      <View
+        style={{
+          ...StyleSheet.absoluteFill,
+          backgroundColor: topColor,
+          opacity: 0.2,
+        }}
+      />
+      {children}
+    </View>
+  );
+}
+
+// ── 功能卡片数据 ──
+const FEATURE_CARDS = [
+  {
+    title: '椅子急救法',
+    desc: '将椅子上的衣物分类，常穿的挂起，待洗的放入脏衣篓。',
+    time: '3分钟完成',
+    tag: '必做',
+    tagColor: '#FFB347',          // 金色背景
+    tagTextColor: C.black,        // 黑色文字
+    buttonLabel: '开始整理',
+    buttonVariant: 'primary' as const,
+  },
+  {
+    title: '桌面清空术',
+    desc: '将桌面上所有物品归位，杂物扔掉，只保留每天必需的 3 件物品。',
+    time: '5分钟完成',
+    tag: '备选',
+    tagColor: '#78909C',
+    tagTextColor: C.white,
+    buttonLabel: '查看',
+    buttonVariant: 'outline' as const,
+  },
+];
+
+// ── 功能卡片组件 ──
+function FeatureCard({
+  title,
+  desc,
+  time,
+  tag,
+  tagColor,
+  tagTextColor,
+  buttonLabel,
+  buttonVariant,
+}: {
+  title: string;
+  desc: string;
+  time: string;
+  tag: string;
+  tagColor: string;
+  tagTextColor: string;
+  buttonLabel: string;
+  buttonVariant: 'primary' | 'outline';
+}) {
+  return (
+    <View style={styles.featureCard}>
+      {/* 顶部渐变区（从下到上：深银灰 → 极浅灰白） */}
+      <VerticalGradient bottomColor="#A0A4A8" topColor="#FAFBFC" height={80}>
+        <View style={styles.cardTags}>
+          <View style={[styles.tag, styles.tagGreen]}>
+            <Text style={styles.tagText}>{time}</Text>
+          </View>
+          <View style={[styles.tag, { backgroundColor: tagColor }]}>
+            <Text style={[styles.tagText, { color: tagTextColor }]}>{tag}</Text>
+          </View>
+        </View>
+      </VerticalGradient>
+
+      {/* 卡片正文 */}
+      <View style={styles.cardBody}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <Text style={styles.cardDesc}>{desc}</Text>
+      </View>
+
+      {/* 操作按钮 */}
+      <TouchableOpacity
+        style={[
+          styles.cardButton,
+          buttonVariant === 'outline' && styles.cardButtonOutline,
+        ]}
+        activeOpacity={0.8}
+      >
+        {buttonVariant === 'primary' && (
+          <MaterialIcons name="play-arrow" size={16} color={C.white} />
+        )}
+        <Text
+          style={[
+            styles.cardButtonText,
+            buttonVariant === 'outline' && styles.cardButtonTextOutline,
+          ]}
+        >
+          {buttonLabel}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ── 首页组件 ──
 export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* 整洁得分卡片 */}
-        <View style={styles.scoreCard}>
-          <Text style={styles.scoreLabel}>整洁得分</Text>
-          <Text style={styles.scoreValue}>--</Text>
-          <Text style={styles.scoreHint}>拍张照片，看看房间有多整洁</Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── 一、顶部导航栏 ── */}
+        <View style={styles.topBar}>
+          <MaterialIcons name="bar-chart" size={24} color={C.primary} />
+          <Text style={styles.topBarTitle}>整洁得分：85</Text>
+          <View style={styles.avatarCircle}>
+            <MaterialIcons name="person" size={18} color={C.grayText} />
+          </View>
         </View>
 
-        {/* 核心功能区 */}
-        <Text style={styles.sectionTitle}>核心功能区</Text>
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() => router.push('/camera')}
-          activeOpacity={0.8}
+        {/* ── 二、整洁得分展示区（环形进度条 + 中心文字）── */}
+        <View style={styles.scoreSection}>
+          <View style={styles.ringWrapper}>
+            <CircularProgress percentage={85} />
+            <View style={styles.ringCenter}>
+              <Text style={styles.ringScoreText}>85</Text>
+              <Text style={styles.ringScoreLabel}>当前得分</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── 三、杂乱提示区（带阴影）── */}
+        <View style={styles.clutterAlert}>
+          <MaterialIcons name="warning" size={16} color={C.danger} />
+          <Text style={styles.clutterText}>检测到3处杂乱</Text>
+        </View>
+
+        {/* ── 四、核心功能区（横向滚动多卡片）── */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>核心功能区</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAll}>查看全部</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.cardsScroll}
+          snapToInterval={260 + spacing.md}
+          decelerationRate="fast"
         >
-          <View style={styles.actionIconContainer}>
-            <MaterialIcons name="camera-alt" size={28} color={colors.onPrimary} />
-          </View>
-          <View style={styles.actionContent}>
-            <Text style={styles.actionTitle}>开始整理</Text>
-            <Text style={styles.actionDesc}>拍照分析房间，获取即时整理建议</Text>
-          </View>
-          <MaterialIcons name="chevron-right" size={24} color={colors.outline} />
-        </TouchableOpacity>
+          {FEATURE_CARDS.map((card, i) => (
+            <FeatureCard key={i} {...card} />
+          ))}
+        </ScrollView>
 
-        {/* 底部提示 */}
-        <View style={styles.tipCard}>
-          <MaterialIcons name="lightbulb" size={20} color={colors.warmAmber} />
-          <Text style={styles.tipText}>
-            每次整理只需 5 分钟，零成本、立竿见影
-          </Text>
+        {/* ── 五、最近对比区 ── */}
+        <Text style={[styles.sectionTitle, { marginTop: spacing.lg }]}>最近对比</Text>
+        <View style={styles.comparisonCard}>
+          <View style={styles.comparisonLeft}>
+            <View style={styles.comparisonBox}>
+              <View style={[styles.comparisonLabel, styles.beforeLabel]}>
+                <Text style={styles.comparisonLabelText}>Before</Text>
+              </View>
+            </View>
+            <View style={styles.comparisonBox}>
+              <View style={[styles.comparisonLabel, styles.afterLabel]}>
+                <Text style={styles.comparisonLabelText}>After</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.comparisonRight}>
+            <MaterialIcons name="trending-up" size={24} color={C.primary} />
+            <Text style={styles.comparisonScore}>+15分</Text>
+          </View>
         </View>
+
+        {/* 底部留白 */}
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+// ── 样式 ──
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface },
-  scrollContent: { padding: spacing.pageMargin, paddingBottom: 100 },
-  scoreCard: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg,
-    padding: spacing.xl,
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-    ...shadows.card,
+  container: {
+    flex: 1,
+    backgroundColor: C.pageBg,   // 偏白的浅灰底色
   },
-  scoreLabel: {
-    fontFamily: 'BeVietnamPro_400Regular',
-    fontSize: typography.bodyMd.fontSize,
-    color: colors.primaryContainer,
-    marginBottom: spacing.sm,
+  scrollContent: {
+    paddingHorizontal: spacing.pageMargin,
   },
-  scoreValue: {
-    fontFamily: 'BeVietnamPro_800ExtraBold',
-    fontSize: typography.scoreDisplay.fontSize,
-    lineHeight: typography.scoreDisplay.lineHeight,
-    color: colors.onPrimary,
-  },
-  scoreHint: {
-    fontFamily: 'BeVietnamPro_400Regular',
-    fontSize: typography.bodyMd.fontSize,
-    color: colors.primaryContainer,
-    marginTop: spacing.sm,
-  },
-  sectionTitle: {
-    fontFamily: 'BeVietnamPro_600SemiBold',
-    fontSize: typography.headlineMd.fontSize,
-    color: colors.onSurface,
-    marginBottom: spacing.md,
-  },
-  actionCard: {
+
+  /* ── 顶部导航栏 ── */
+  topBar: {
+    height: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.paperWhite,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    ...shadows.card,
+    justifyContent: 'space-between',
   },
-  actionIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
+  topBarTitle: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: C.grayText,
+  },
+  avatarCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: C.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
   },
-  actionContent: { flex: 1 },
-  actionTitle: {
-    fontFamily: 'BeVietnamPro_600SemiBold',
-    fontSize: typography.bodyLg.fontSize,
-    color: colors.onSurface,
+
+  /* ── 整洁得分展示区 ── */
+  scoreSection: {
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg,
   },
-  actionDesc: {
-    fontFamily: 'BeVietnamPro_400Regular',
-    fontSize: typography.bodyMd.fontSize,
-    color: colors.onSurfaceVariant,
+  ringWrapper: {
+    width: 200,
+    height: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ringCenter: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ringScoreText: {
+    fontSize: 60,
+    fontWeight: '700',
+    color: C.primary,
+    lineHeight: 66,
+  },
+  ringScoreLabel: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: C.black,
     marginTop: 2,
   },
-  tipCard: {
+
+  /* ── 杂乱提示区 ── */
+  clutterAlert: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.paperWhite,
+    justifyContent: 'center',
+    alignSelf: 'center',
+    backgroundColor: C.dangerBg,
+    borderRadius: 12,
+    height: 36,
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+    shadowColor: '#E53935',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  clutterText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: C.black,
+  },
+
+  /* ── 核心功能区标题 ── */
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: C.black,
+  },
+  viewAll: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: C.primary,
+  },
+
+  /* ── 横向滚动容器 ── */
+  cardsScroll: {
+    paddingRight: spacing.pageMargin,
+    gap: spacing.md,
+  },
+
+  /* ── 功能卡片 ── */
+  featureCard: {
+    width: 260,
+    backgroundColor: C.white,
     borderRadius: radius.md,
-    padding: spacing.md,
+    shadowColor: C.grayBg,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 2,
+    overflow: 'hidden',
+    marginBottom: spacing.lg,
+  },
+  cardTags: {
+    position: 'absolute',
+    bottom: spacing.sm,
+    left: spacing.md,
+    flexDirection: 'row',
     gap: spacing.sm,
   },
-  tipText: {
-    fontFamily: 'BeVietnamPro_400Regular',
-    fontSize: typography.bodyMd.fontSize,
-    color: colors.onSurfaceVariant,
+  tag: {
+    borderRadius: 12,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+  },
+  tagGreen: {
+    backgroundColor: C.primary,
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: C.white,
+  },
+  cardBody: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: C.black,
+    marginBottom: spacing.xs,
+  },
+  cardDesc: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: C.black,
+    lineHeight: 21,
+  },
+  cardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    backgroundColor: C.primary,
+    height: 44,
+    borderRadius: 20,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    gap: spacing.xs,
+  },
+  cardButtonOutline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: C.primary,
+  },
+  cardButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: C.white,
+  },
+  cardButtonTextOutline: {
+    color: C.primary,
+  },
+
+  /* ── 最近对比区 ── */
+  comparisonCard: {
+    flexDirection: 'row',
+    backgroundColor: C.white,
+    borderRadius: radius.md,
+    height: 120,
+    padding: spacing.md,
+    shadowColor: C.grayBg,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    elevation: 2,
+    marginTop: spacing.md,
+  },
+  comparisonLeft: {
+    flex: 7,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignItems: 'center',
+  },
+  comparisonBox: {
     flex: 1,
+    aspectRatio: 1,
+    backgroundColor: C.grayBg,
+    borderRadius: radius.sm,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+  comparisonLabel: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderTopLeftRadius: radius.sm,
+    borderBottomRightRadius: radius.sm,
+  },
+  beforeLabel: {
+    backgroundColor: C.grayText,
+  },
+  afterLabel: {
+    backgroundColor: C.primary,
+  },
+  comparisonLabelText: {
+    fontSize: 10,
+    fontWeight: '400',
+    color: C.white,
+  },
+  comparisonRight: {
+    flex: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  comparisonScore: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: C.primary,
+    marginTop: 4,
   },
 });

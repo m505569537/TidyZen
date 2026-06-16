@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -18,20 +18,21 @@ const MOCK_RECORDS: HistoryRecord[] = [
 
 export default function HistoryScreen() {
   const { filter, setFilter } = useHistoryStore();
-  const records = MOCK_RECORDS; // 后续替换为 store.records
+  const records = MOCK_RECORDS;
 
   const filteredRecords = records.filter((r) => {
     if (filter === 'all') return true;
-    // 简化：本周/本月筛选后续实现
     return true;
   });
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* 顶部 */}
+      {/* 顶部标题栏 */}
       <View style={styles.header}>
         <Text style={styles.title}>整理记录</Text>
-        <MaterialIcons name="filter-list" size={24} color={colors.onSurface} />
+        <TouchableOpacity style={styles.filterBtn}>
+          <MaterialIcons name="filter-list" size={22} color={colors.onSurfaceVariant} />
+        </TouchableOpacity>
       </View>
 
       {/* 分段控制器 */}
@@ -63,6 +64,7 @@ export default function HistoryScreen() {
             />
           )}
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </SafeAreaView>
@@ -75,7 +77,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: spacing.pageMargin, paddingVertical: spacing.md,
   },
-  title: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: typography.headlineMd.fontSize, color: colors.onSurface },
+  title: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.headlineLgMobile?.fontSize ?? 24,
+    lineHeight: typography.headlineLgMobile?.lineHeight ?? 32,
+    color: colors.onSurface,
+  },
+  filterBtn: {
+    width: 40, height: 40, borderRadius: radius.full,
+    backgroundColor: colors.surfaceContainer,
+    alignItems: 'center', justifyContent: 'center',
+  },
   segmentWrapper: { paddingHorizontal: spacing.pageMargin, marginBottom: spacing.md },
   list: { paddingHorizontal: spacing.pageMargin, paddingBottom: 100 },
 });
