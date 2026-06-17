@@ -73,10 +73,11 @@ export default function CameraScreen() {
         return;
       }
 
+      // 注意：iOS 模拟器在 allowsEditing:true 时，系统裁剪 UI 的「Choose」按钮
+      // 会卡住/不可点（PHPicker bug）。这里改为直接返回原图：
+      // 用户点选 → 系统自动确认 → 直接进入分析页。
       const res = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
+        mediaTypes: ['images'],
         quality: 0.8,
         base64: true,
       });
