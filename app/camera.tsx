@@ -16,7 +16,8 @@ export default function CameraScreen() {
 
   const handleBack = () => {
     setActive(false);
-    router.back();
+    // 直接回首页，不经过 scan tab（避免 scan 的 useEffect 再次 push 到 camera）
+    router.replace('/(tabs)');
   };
 
   if (!permission) {
