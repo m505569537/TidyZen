@@ -75,7 +75,7 @@ export async function analyzeImage(
       Authorization: `Bearer ${API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'mimo-v2.5-pro',
+      model: 'mimo-v2.5',
       messages: [
         {
           role: 'user',
@@ -91,7 +91,6 @@ export async function analyzeImage(
           ],
         },
       ],
-      response_format: { type: 'json_object' },
     }),
   });
 
