@@ -1,7 +1,10 @@
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
+import { useHistoryStore } from '../../stores/history';
+import { getHistoryRecords } from '../../services/storage';
 
 // ── 环形进度条（纯 RN，无 SVG 依赖）──
 function CircularProgress({
@@ -226,6 +229,16 @@ function FeatureCard({
 
 // ── 首页组件 ──
 export default function HomeScreen() {
+  const { records, setRecords } = useHistoryStore();
+
+  // 从持久化存储加载历史记录到 store
+  useEffect(() => {
+    getHistoryRecords().then(setRecords);
+  }, [setRecords]);
+
+  // 使用最新一条记录的得分；无记录时回退到 85
+  const latestScore = records[0]?.score ?? 85;
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
@@ -235,7 +248,7 @@ export default function HomeScreen() {
         {/* ── 一、顶部导航栏 ── */}
         <View style={styles.topBar}>
           <MaterialIcons name="bar-chart" size={24} color={colors.primary} />
-          <Text style={styles.topBarTitle}>整洁得分：85</Text>
+          <Text style={styles.topBarTitle}>整洁得分：{latestScore}</Text>
           <View style={styles.avatarCircle}>
             <MaterialIcons name="person" size={18} color={colors.onSurfaceVariant} />
           </View>
@@ -245,9 +258,9 @@ export default function HomeScreen() {
         <View style={styles.scoreCard}>
           <View style={styles.scoreSection}>
             <View style={styles.ringWrapper}>
-              <CircularProgress percentage={85} />
+              <CircularProgress percentage={latestScore} />
               <View style={styles.ringCenter}>
-                <Text style={styles.ringScoreText}>85</Text>
+                <Text style={styles.ringScoreText}>{latestScore}</Text>
                 <Text style={styles.ringScoreLabel}>当前得分</Text>
               </View>
             </View>

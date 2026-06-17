@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
 import { Tag, ConfidenceBadge } from '../../components';
+import { useHistoryStore } from '../../stores/history';
 
 // ── 执行清单项数据 ──
 const CHECKLIST_ITEMS = [
@@ -22,19 +23,23 @@ const ACHIEVEMENTS = [
 
 export default function RecordDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const stored = useHistoryStore((s) => s.records.find((r) => r.id === id));
 
+  // HistoryRecord 仅包含摘要字段；其余字段（场景、清单、建议、笔记、激励语）暂用占位数据
   const record = {
-    score: 85,
-    date: '2026年6月15日 14:30',
+    score: stored?.score ?? 85,
+    date: stored?.createdAt ?? '2026年6月15日 14:30',
     scene: '卧室',
     lighting: 'normal' as const,
-    scoreChange: 25,
-    scoreDate: '10月24日',
-    scoreTime: '18:30',
-    clutterItems: [
-      { display_name: '衣物', count: 5, area_ratio: 0.18, confidence: 0.92 },
-      { display_name: '纸箱', count: 2, area_ratio: 0.12, confidence: 0.85 },
-    ],
+    scoreChange: stored?.scoreChange ?? 25,
+    scoreDate: stored?.createdAt ?? '10月24日',
+    scoreTime: '',
+    clutterItems: (stored?.clutterTags ?? ['衣物', '纸箱']).map((name) => ({
+      display_name: name,
+      count: 1,
+      area_ratio: 0.15,
+      confidence: 0.9,
+    })),
     suggestions: [
       { title: '椅子急救法', type: 'must_do' as const, time_cost: '3分钟' },
       { title: '压扁隐身法', type: 'optional' as const, time_cost: '2分钟' },

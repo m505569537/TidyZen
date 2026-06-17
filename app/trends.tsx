@@ -4,22 +4,55 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../constants/theme';
 import { SegmentedControl } from '../components';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useHistoryStore } from '../stores/history';
+import { getHistoryRecords } from '../services/storage';
 
 const screenWidth = Dimensions.get('window').width;
 
-const TREND_DATA = [
-  { date: '6/5', score: 65 },
-  { date: '6/8', score: 78 },
-  { date: '6/10', score: 92 },
-  { date: '6/12', score: 72 },
-  { date: '6/15', score: 85 },
-];
+// 将 createdAt 转为简短日期标签 "M/D"，回退到原字符串
+function formatTrendDate(createdAt: string): string {
+  const d = new Date(createdAt);
+  if (!isNaN(d.getTime())) {
+    return `${d.getMonth() + 1}/${d.getDate()}`;
+  }
+  // 例如 "6月15日 14:30" → "6/15"
+  const m = createdAt.match(/(\d+)月(\d+)日/);
+  if (m) return `${m[1]}/${m[2]}`;
+  return createdAt;
+}
 
 export default function TrendsScreen() {
   const [period, setPeriod] = useState('month');
   const chartHeight = 200;
   const chartWidth = screenWidth - spacing.pageMargin * 2 - 40;
+
+  const { records, setRecords } = useHistoryStore();
+
+  // 从持久化存储加载历史记录到 store
+  useEffect(() => {
+    getHistoryRecords().then(setRecords);
+  }, [setRecords]);
+
+  // records 是按时间倒序存储的（最新在前），图表按时间正序展示
+  const trendData = useMemo(
+    () =>
+      [...records]
+        .reverse()
+        .map((r) => ({ date: formatTrendDate(r.createdAt), score: r.score })),
+    [records]
+  );
+
+  const stats = useMemo(() => {
+    const count = records.length;
+    const avg = count
+      ? (records.reduce((s, r) => s + r.score, 0) / count).toFixed(1)
+      : '0.0';
+    // 总提升 = 最新分 − 最早分
+    const totalGain =
+      count >= 2 ? records[0].score - records[records.length - 1].score : 0;
+    return { count, avg, totalGain };
+  }, [records]);
 
   const getScoreColor = (score: number) => {
     if (score >= 70) return colors.healingGreen;
@@ -54,7 +87,7 @@ export default function TrendsScreen() {
               <Text style={styles.axisLabel}>0</Text>
             </View>
             <View style={styles.barsContainer}>
-              {TREND_DATA.map((point, i) => {
+              {trendData.map((point, i) => {
                 const barHeight = (point.score / 100) * (chartHeight - 20);
                 return (
                   <View key={i} style={styles.barGroup}>
@@ -76,15 +109,17 @@ export default function TrendsScreen() {
         {/* 统计卡片 */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>5</Text>
+            <Text style={styles.statValue}>{stats.count}</Text>
             <Text style={styles.statLabel}>总分析次数</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={[styles.statValue, { color: colors.healingGreen }]}>78.4</Text>
+            <Text style={[styles.statValue, { color: colors.healingGreen }]}>{stats.avg}</Text>
             <Text style={styles.statLabel}>平均得分</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={[styles.statValue, { color: colors.warmAmber }]}>+20</Text>
+            <Text style={[styles.statValue, { color: colors.warmAmber }]}>
+              {stats.totalGain >= 0 ? `+${stats.totalGain}` : stats.totalGain}
+            </Text>
             <Text style={styles.statLabel}>总提升</Text>
           </View>
         </View>

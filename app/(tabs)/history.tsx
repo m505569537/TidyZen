@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -6,21 +6,16 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius } from '../../constants/theme';
 import { SegmentedControl, EmptyState, RecordCard, TipsModal } from '../../components';
 import { useHistoryStore } from '../../stores/history';
-import type { HistoryRecord } from '../../types/analysis';
-
-// Mock 数据
-const MOCK_RECORDS: HistoryRecord[] = [
-  { id: '1', score: 85, createdAt: '6月15日 14:30', clutterTags: ['衣物堆积', '纸箱'], scoreChange: 15, thumbnailUri: undefined },
-  { id: '2', score: 72, createdAt: '6月12日 10:15', clutterTags: ['桌面杂物', '电线缠绕', '书籍', '瓶罐'], scoreChange: -5, thumbnailUri: undefined },
-  { id: '3', score: 92, createdAt: '6月10日 18:00', clutterTags: ['整体整洁'], scoreChange: undefined, thumbnailUri: undefined },
-  { id: '4', score: 78, createdAt: '6月8日 09:45', clutterTags: ['纸张整理'], scoreChange: 8, thumbnailUri: undefined },
-  { id: '5', score: 65, createdAt: '6月5日 21:20', clutterTags: ['鞋履摆放'], scoreChange: -12, thumbnailUri: undefined },
-];
+import { getHistoryRecords } from '../../services/storage';
 
 export default function HistoryScreen() {
-  const { filter, setFilter } = useHistoryStore();
-  const records = MOCK_RECORDS;
+  const { filter, setFilter, records, setRecords } = useHistoryStore();
   const [tipsVisible, setTipsVisible] = useState(false);
+
+  // 从持久化存储加载历史记录到 store
+  useEffect(() => {
+    getHistoryRecords().then(setRecords);
+  }, [setRecords]);
 
   const filteredRecords = records.filter((_r) => {
     if (filter === 'all') return true;

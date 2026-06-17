@@ -1,15 +1,40 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
+import { useHistoryStore } from '../stores/history';
+import { saveHistoryRecord, getHistoryRecords } from '../services/storage';
 import { BoundingBox, ConfidenceBadge } from '../components';
+import type { HistoryRecord } from '../types/analysis';
 
 export default function ResultScreen() {
   const { result, setCorrecting, reset } = useAnalysisStore();
   const [photoSize, setPhotoSize] = useState({ width: 0, height: 0 });
+  const savedIdRef = useRef<string | null>(null);
+
+  // 持久化分析结果到历史记录（每个 result.id 只保存一次）
+  useEffect(() => {
+    if (!result || savedIdRef.current === result.id) return;
+    savedIdRef.current = result.id;
+
+    (async () => {
+      const existing = await getHistoryRecords();
+      const prevScore = existing[0]?.score;
+      const record: HistoryRecord = {
+        id: result.id,
+        score: result.score,
+        createdAt: result.createdAt,
+        thumbnailUri: result.thumbnailUri ?? result.photoUri,
+        clutterTags: result.clutterItems.map((c) => c.display_name),
+        scoreChange: prevScore !== undefined ? result.score - prevScore : undefined,
+      };
+      await saveHistoryRecord(record);
+      useHistoryStore.getState().addRecord(record);
+    })();
+  }, [result]);
 
   if (!result) {
     router.replace('/camera');
