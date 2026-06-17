@@ -1,9 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../constants/theme';
-import { useState } from 'react';
 
 interface SettingItemProps {
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -32,7 +31,6 @@ function SettingItem({ icon, label, subtitle, right, onPress, iconBg, iconColor,
 }
 
 export default function SettingsScreen() {
-  const [notify, setNotify] = useState(true);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -78,8 +76,11 @@ export default function SettingsScreen() {
 
         <Text style={styles.groupTitle}>系统设置</Text>
         <View style={styles.groupCard}>
-          <SettingItem icon="notifications" label="消息通知" showArrow={false}
-            right={<Switch value={notify} onValueChange={setNotify} trackColor={{ true: colors.primary, false: colors.outlineVariant }} thumbColor={colors.paperWhite} />}
+          <SettingItem
+            icon="notifications"
+            label="消息通知"
+            subtitle="自定义提醒时间与通知方式"
+            onPress={() => router.push('/notification-preferences')}
           />
           <SettingItem icon="delete-sweep" label="清除本地照片缓存" subtitle="已开启隐私保护" showArrow={false}
             right={<Text style={styles.cacheSize}>124 MB</Text>}

@@ -51,6 +51,7 @@ export default function RootLayout() {
         <Stack.Screen name="account" />
         <Stack.Screen name="room-templates" />
         <Stack.Screen name="suggestion-preferences" />
+        <Stack.Screen name="notification-preferences" />
       </Stack>
     </>
   );
