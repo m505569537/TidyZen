@@ -53,18 +53,18 @@
 
 | 页面 | 路由 | UI 完成度 | 数据流 | 备注 |
 |---|---|---|---|---|
-| 首页 | `/(tabs)/index` | ✅ 完成 | ⚠️ Mock | 评分卡片显示 `--`，无真实数据 |
+| 首页 | `/(tabs)/index` | ✅ 完成 | ✅ 完成 | 从 history store 读取最新得分 |
 | 扫描 Tab | `/(tabs)/scan` | ✅ 完成 | ✅ 完成 | 纯跳转逻辑 |
-| 记录 Tab | `/(tabs)/history` | ✅ 完成 | ❌ Mock | `MOCK_RECORDS` 硬编码，未接 store |
+| 记录 Tab | `/(tabs)/history` | ✅ 完成 | ✅ 完成 | 从 store/storage 加载真实记录 |
 | 设置 Tab | `/(tabs)/settings` | ✅ 完成 | ⚠️ 部分 | 开关有本地状态，清除功能未接 |
 | 拍照 | `/camera` | ✅ 完成 | ✅ 完成 | 权限 + 拍照 + base64 |
 | 分析中 | `/analyzing` | ✅ 完成 | ⚠️ Mock | 1.5s 延时后调 mock AI |
-| 分析结果 | `/result` | ✅ 完成 | ⚠️ Mock | mock 数据，无真实 API |
+| 分析结果 | `/result` | ✅ 完成 | ✅ 完成 | 分析完自动保存到 storage + store |
 | 纠错/场景 | `/correction` | ✅ 完成 | ⚠️ Mock | 选场景后重调 mock AI |
 | 建议详情 | `/detail/[id]` | ✅ 完成 | ❌ Mock | `suggestion` 对象硬编码 |
 | 视频教程 | `/video/[id]` | ⚠️ 占位 | ❌ 无 | 只有播放图标，无视频 |
-| 记录详情 | `/record/[id]` | ✅ 完成 | ❌ Mock | `record` 对象硬编码 |
-| 整理足迹 | `/trends` | ✅ 完成 | ❌ Mock | `TREND_DATA` 硬编码 |
+| 记录详情 | `/record/[id]` | ✅ 完成 | ✅ 完成 | 从 store 按 id 查找 |
+| 整理足迹 | `/trends` | ✅ 完成 | ✅ 完成 | 从 store 计算趋势数据 |
 | 个人资料 | `/profile` | ✅ 完成 | ❌ Mock | 统计数据硬编码 |
 | 帮助中心 | `/help` | ✅ 完成 | ✅ 完成 | 纯静态 |
 | 关于 | `/about` | ✅ 完成 | ✅ 完成 | 纯静态 |
@@ -82,9 +82,9 @@
 |---|---|---|---|
 | AI 分析 | `services/ai.ts` | ⚠️ Mock | API 调用代码已写好但注释，使用硬编码 mock |
 | 建议匹配 | `services/suggestions.ts` | ✅ 完成 | 10场景 × 20条建议，按优先级匹配 |
-| 本地存储 | `services/storage.ts` | ✅ 完成 | AsyncStorage CRUD，但页面未接入 |
+| 本地存储 | `services/storage.ts` | ✅ 完成 | 已接入 result/history/index/record/trends |
 | 分析 Store | `stores/analysis.ts` | ✅ 完成 | Zustand，流程状态管理 |
-| 历史 Store | `stores/history.ts` | ✅ 完成 | Zustand，但未接入 storage service |
+| 历史 Store | `stores/history.ts` | ✅ 完成 | Zustand，已通过 result.tsx 接入 storage |
 
 ---
 
@@ -130,20 +130,20 @@
 
 ## 五、开发路线图（2026-06-17 更新）
 
-### P0 — 补齐缺失页面（设计稿 100% 覆盖）
+### P0 — 补齐缺失页面（设计稿 100% 覆盖）✅ 完成
 > 纯 UI，无后端依赖，CC 半天搞定
 
-- [ ] **服务条款页面** — 纯静态，新建 `app/terms.tsx`，15 min
-- [ ] **修改密码页面** — 表单页，新建 `app/change-password.tsx`，30 min
-- [ ] **整理秘籍弹窗** — 弹窗组件，嵌入 history.tsx 或独立组件，30 min
-- [ ] **勋章墙** — 列表+卡片，新建 `app/medals.tsx`，1 h
+- [x] **服务条款页面** — app/terms.tsx, 318 行 (ad795b5)
+- [x] **修改密码页面** — app/change-password.tsx, 210 行 (ad795b5)
+- [x] **整理秘籍弹窗** — components/TipsModal.tsx, 317 行 (ad795b5)
+- [x] **勋章墙** — app/medals.tsx, 514 行 (ad795b5)
 
-### P1 — 打通数据流（从"能看"到"能用"）
+### P1 — 打通数据流（从"能看"到"能用"）✅ 完成
 > 让拍照结果能持久化，App 算真正可用
 
-- [ ] **history/store/storage 串联** — 记录列表不再硬编码
-- [ ] **首页接入真实评分** — 显示最新一次分析的整洁度分数
-- [ ] **record/[id] + trends 接入 store** — 点击记录看详情，趋势图有真实数据
+- [x] **result.tsx → storage → history store 串联** — 分析完成后自动保存到 AsyncStorage + 更新 store (448e589)
+- [x] **首页接入真实评分** — latestScore = records[0]?.score ?? 85 (448e589)
+- [x] **record/[id] + trends 接入 store** — 从 useHistoryStore 读取，不再硬编码 (448e589)
 
 ### P2 — 核心能力对齐（AI 对接）
 > 依赖后端服务就绪
