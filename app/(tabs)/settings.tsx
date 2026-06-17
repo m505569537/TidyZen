@@ -41,7 +41,7 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <TouchableOpacity style={styles.userCard} activeOpacity={0.7} onPress={() => router.push('/(tabs)/profile')}>
+        <TouchableOpacity style={styles.userCard} activeOpacity={0.7} onPress={() => router.push('/profile')}>
           <View style={styles.avatar}>
             <MaterialIcons name="person" size={28} color={colors.onPrimary} />
           </View>
@@ -56,7 +56,7 @@ export default function SettingsScreen() {
 
         <Text style={styles.groupTitle}>账号与安全</Text>
         <View style={styles.groupCard}>
-          <SettingItem icon="person" label="个人资料" onPress={() => router.push('/(tabs)/profile')} />
+          <SettingItem icon="person" label="个人资料" onPress={() => router.push('/profile')} />
           <SettingItem icon="link" label="账号绑定" right={
             <View style={styles.rightRow}>
               <Text style={styles.hintText}>已绑定微信</Text>
