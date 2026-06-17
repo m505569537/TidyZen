@@ -99,7 +99,7 @@ export default function ProfileScreen() {
         <View style={styles.medalSection}>
           <View style={styles.medalHeader}>
             <Text style={styles.medalTitle}>{'获得勋章'}</Text>
-            <TouchableOpacity><Text style={styles.medalAll}>{'全部'}</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/medals')}><Text style={styles.medalAll}>{'全部'}</Text></TouchableOpacity>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.medalScroll}>
             {MEDALS.map((m) => (

@@ -8,3 +8,5 @@ export { ScoreGauge } from './ScoreGauge';
 export { BoundingBox } from './BoundingBox';
 export { SceneCard } from './SceneCard';
 export { RecordCard } from './RecordCard';
+export { TipsModal } from './TipsModal';
+export type { TipStep } from './TipsModal';

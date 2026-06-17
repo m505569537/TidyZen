@@ -49,9 +49,12 @@ export default function RootLayout() {
         <Stack.Screen name="about" />
         <Stack.Screen name="privacy" />
         <Stack.Screen name="account" />
+        <Stack.Screen name="change-password" />
         <Stack.Screen name="room-templates" />
         <Stack.Screen name="suggestion-preferences" />
         <Stack.Screen name="notification-preferences" />
+        <Stack.Screen name="terms" />
+        <Stack.Screen name="medals" />
       </Stack>
     </>
   );

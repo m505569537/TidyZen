@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius } from '../../constants/theme';
-import { SegmentedControl, EmptyState, RecordCard } from '../../components';
+import { SegmentedControl, EmptyState, RecordCard, TipsModal } from '../../components';
 import { useHistoryStore } from '../../stores/history';
 import type { HistoryRecord } from '../../types/analysis';
 
@@ -19,6 +20,7 @@ const MOCK_RECORDS: HistoryRecord[] = [
 export default function HistoryScreen() {
   const { filter, setFilter } = useHistoryStore();
   const records = MOCK_RECORDS;
+  const [tipsVisible, setTipsVisible] = useState(false);
 
   const filteredRecords = records.filter((_r) => {
     if (filter === 'all') return true;
@@ -57,6 +59,22 @@ export default function HistoryScreen() {
         />
       </View>
 
+      {/* 整理秘籍入口 */}
+      <TouchableOpacity
+        style={styles.tipsEntry}
+        activeOpacity={0.8}
+        onPress={() => setTipsVisible(true)}
+      >
+        <View style={styles.tipsIconWrap}>
+          <MaterialIcons name="lightbulb" size={20} color="#3E9E77" />
+        </View>
+        <View style={styles.tipsTextWrap}>
+          <Text style={styles.tipsTitle}>整理秘籍：办公桌线缆</Text>
+          <Text style={styles.tipsSubtitle}>3 步搞定线缆收纳</Text>
+        </View>
+        <MaterialIcons name="chevron-right" size={22} color={colors.outline} />
+      </TouchableOpacity>
+
       {/* 列表 / 空状态 */}
       {filteredRecords.length === 0 ? (
         <EmptyState
@@ -80,6 +98,12 @@ export default function HistoryScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* 整理秘籍弹窗 */}
+      <TipsModal
+        visible={tipsVisible}
+        onClose={() => setTipsVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -128,6 +152,42 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.pageMargin,
     marginTop: spacing.md,
     marginBottom: spacing.md,
+  },
+  // ── 整理秘籍入口 ──
+  tipsEntry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.paperWhite,
+    marginHorizontal: spacing.pageMargin,
+    marginBottom: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    gap: spacing.md,
+  },
+  tipsIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: '#D4F5E3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tipsTextWrap: {
+    flex: 1,
+  },
+  tipsTitle: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurface,
+    marginBottom: 2,
+  },
+  tipsSubtitle: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
   },
   // ── 列表 ──
   list: {

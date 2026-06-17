@@ -1,39 +1,94 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, usePathname } from 'expo-router';
+import { router } from 'expo-router';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
-// ── 设计稿色板（严格对齐 docs/designs/notification_preferences_design.md）──
+// ── 设计稿色板（严格对齐 docs/designs/notification_preferences_design_v2.md）──
 const DESIGN = {
-  primary: '#1A3C34',          // 深绿
-  background: '#F5F7FA',       // 浅灰白
+  primary: '#1A7354',          // 深绿（开关滑块、导航选中、强调色）
+  background: '#F5F5F5',       // 页面浅灰背景
   card: '#FFFFFF',
-  divider: '#EEEEEE',
-  tipBg: '#E6F7F0',            // 浅薄荷绿
-  textPrimary: '#222222',      // 选项文字
-  textSecondary: '#666666',    // 分组标题
-  textTertiary: '#444444',     // 小贴士正文
-  switchOffTrack: '#E0E0E0',
-  switchOffThumb: '#BDBDBD',
-  navInactive: '#999999',
+  divider: '#E0E0E0',          // 分隔线 / 关闭态轨道
+  tipBg: '#E6F7EE',            // 浅绿提示框背景
+  switchOnTrack: '#C8F4E3',    // 开启态轨道浅绿
+  switchOffTrack: '#E0E0E0',   // 关闭态轨道浅灰
+  switchOffThumb: '#FFFFFF',   // 关闭态滑块
+  navActiveBg: '#E6F7EE',      // 底部导航选中背景
+  navInactive: '#333333',      // 底部导航未选中文字（设计稿规定）
+  textPrimary: '#333333',      // 主文字
+  textSecondary: '#666666',    // 模块标题
 } as const;
 
-// ── 通知内容开关项 ──
+// ── 自定义双色开关 ──────────────────────────────────────────────
+interface CustomSwitchProps {
+  value: boolean;
+  onValueChange: () => void;
+}
+
+function CustomSwitch({ value, onValueChange }: CustomSwitchProps) {
+  // 滑块横向位移动画：关闭=2，开启=22（轨道宽 44，滑块直径 20，左右各留 2px 间隙）
+  const translate = useRef(new Animated.Value(value ? 22 : 2)).current;
+
+  useEffect(() => {
+    Animated.timing(translate, {
+      toValue: value ? 22 : 2,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [value, translate]);
+
+  return (
+    <Pressable
+      onPress={onValueChange}
+      hitSlop={8}
+      style={[
+        switchStyles.track,
+        { backgroundColor: value ? DESIGN.switchOnTrack : DESIGN.switchOffTrack },
+      ]}
+    >
+      <Animated.View
+        style={[
+          switchStyles.thumb,
+          {
+            backgroundColor: value ? DESIGN.primary : DESIGN.switchOffThumb,
+            transform: [{ translateX: translate }],
+          },
+        ]}
+      />
+    </Pressable>
+  );
+}
+
+const switchStyles = StyleSheet.create({
+  track: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+  },
+  thumb: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    // 关闭态白色滑块需要轻微阴影才能从浅灰轨道里跳出来
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+  },
+});
+
+// ── 数据结构 ──
 interface ToggleItem {
   id: string;
   label: string;
   enabled: boolean;
 }
 
-// ── 通知方式（带图标的开关项）──
-interface IconToggleItem extends ToggleItem {
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
-}
-
 export default function NotificationPreferencesScreen() {
-  const pathname = usePathname();
-
   // 「通知内容」分组
   const [contentItems, setContentItems] = useState<ToggleItem[]>([
     { id: 'reminder', label: '整理提醒通知', enabled: true },
@@ -47,10 +102,10 @@ export default function NotificationPreferencesScreen() {
   const [reportTime, setReportTime] = useState('08:30');
 
   // 「通知方式」分组
-  const [methodItems, setMethodItems] = useState<IconToggleItem[]>([
-    { id: 'push', label: '推送通知', icon: 'bell-outline', enabled: true },
-    { id: 'sound', label: '声音提醒', icon: 'volume-high', enabled: true },
-    { id: 'vibrate', label: '震动提醒', icon: 'vibrate', enabled: false },
+  const [methodItems, setMethodItems] = useState<ToggleItem[]>([
+    { id: 'push', label: '推送通知', enabled: true },
+    { id: 'sound', label: '声音提醒', enabled: true },
+    { id: 'vibrate', label: '震动提醒', enabled: false },
   ]);
 
   const toggleContent = (id: string) =>
@@ -82,13 +137,7 @@ export default function NotificationPreferencesScreen() {
               style={[styles.row, idx < contentItems.length - 1 && styles.rowDivider]}
             >
               <Text style={styles.rowLabel}>{item.label}</Text>
-              <Switch
-                value={item.enabled}
-                onValueChange={() => toggleContent(item.id)}
-                trackColor={{ true: DESIGN.primary, false: DESIGN.switchOffTrack }}
-                thumbColor={item.enabled ? '#FFFFFF' : DESIGN.switchOffThumb}
-                ios_backgroundColor={DESIGN.switchOffTrack}
-              />
+              <CustomSwitch value={item.enabled} onValueChange={() => toggleContent(item.id)} />
             </View>
           ))}
         </View>
@@ -107,7 +156,7 @@ export default function NotificationPreferencesScreen() {
             <Text style={styles.rowLabel}>整理提醒时间</Text>
             <View style={styles.timeRight}>
               <Text style={styles.timeText}>{reminderTime}</Text>
-              <MaterialIcons name="chevron-right" size={16} color={DESIGN.primary} />
+              <MaterialIcons name="chevron-right" size={20} color={DESIGN.primary} />
             </View>
           </TouchableOpacity>
           <TouchableOpacity
@@ -120,7 +169,7 @@ export default function NotificationPreferencesScreen() {
             <Text style={styles.rowLabel}>报告推送时间</Text>
             <View style={styles.timeRight}>
               <Text style={styles.timeText}>{reportTime}</Text>
-              <MaterialIcons name="chevron-right" size={16} color={DESIGN.primary} />
+              <MaterialIcons name="chevron-right" size={20} color={DESIGN.primary} />
             </View>
           </TouchableOpacity>
         </View>
@@ -133,36 +182,27 @@ export default function NotificationPreferencesScreen() {
               key={item.id}
               style={[styles.row, idx < methodItems.length - 1 && styles.rowDivider]}
             >
-              <View style={styles.rowLeft}>
-                <MaterialCommunityIcons name={item.icon} size={20} color={DESIGN.primary} />
-                <Text style={[styles.rowLabel, styles.rowLabelWithIcon]}>{item.label}</Text>
-              </View>
-              <Switch
-                value={item.enabled}
-                onValueChange={() => toggleMethod(item.id)}
-                trackColor={{ true: DESIGN.primary, false: DESIGN.switchOffTrack }}
-                thumbColor={item.enabled ? '#FFFFFF' : DESIGN.switchOffThumb}
-                ios_backgroundColor={DESIGN.switchOffTrack}
-              />
+              <Text style={styles.rowLabel}>{item.label}</Text>
+              <CustomSwitch value={item.enabled} onValueChange={() => toggleMethod(item.id)} />
             </View>
           ))}
         </View>
 
-        {/* ── 小贴士卡片 ── */}
+        {/* ── 引导提示框 ── */}
         <View style={styles.tipCard}>
-          <View style={styles.tipIconWrap}>
-            <MaterialCommunityIcons name="leaf" size={24} color={DESIGN.primary} />
-          </View>
-          <View style={styles.tipContent}>
-            <Text style={styles.tipTitle}>小贴士</Text>
-            <Text style={styles.tipBody}>
-              合理的通知设置能帮助您养成每天整理的小习惯。准时的提醒就像一位温和的伙伴，在您最需要的时候给予指引，让整洁成为您生活的一部分。
-            </Text>
-          </View>
+          <MaterialCommunityIcons
+            name="lightbulb-on-outline"
+            size={22}
+            color={DESIGN.primary}
+            style={styles.tipIcon}
+          />
+          <Text style={styles.tipText}>
+            合理的通知设置能帮助您养成每天整理的小习惯。通过AI分析和实时提醒，我们将共同打造一个更舒适的生活空间。
+          </Text>
         </View>
       </ScrollView>
 
-      {/* ── 底部全局导航栏 ── */}
+      {/* ── 底部全局导航栏（4 个入口）── */}
       <View style={styles.bottomNav}>
         <BottomNavItem
           icon="home-outline"
@@ -171,8 +211,8 @@ export default function NotificationPreferencesScreen() {
           onPress={() => router.replace('/(tabs)')}
         />
         <BottomNavItem
-          icon="calendar-blank-outline"
-          label="计划"
+          icon="broom"
+          label="整理"
           active={false}
           onPress={() => router.replace('/(tabs)/history')}
         />
@@ -238,7 +278,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'BeVietnamPro_700Bold',
     fontSize: 18,
-    color: DESIGN.primary,
+    color: DESIGN.textPrimary,
     marginLeft: 12,
   },
 
@@ -262,33 +302,25 @@ const styles = StyleSheet.create({
   // ── 设置卡片 ──
   card: {
     backgroundColor: DESIGN.card,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    minHeight: 56,
+    minHeight: 52,
   },
   rowDivider: {
     borderBottomWidth: 1,
     borderBottomColor: DESIGN.divider,
   },
-  rowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
   rowLabel: {
     fontFamily: 'BeVietnamPro_400Regular',
     fontSize: 16,
     color: DESIGN.textPrimary,
-  },
-  rowLabelWithIcon: {
-    marginLeft: 8,
   },
 
   // ── 时间项 ──
@@ -300,50 +332,38 @@ const styles = StyleSheet.create({
     fontFamily: 'BeVietnamPro_600SemiBold',
     fontSize: 16,
     color: DESIGN.primary,
-    marginRight: 8,
+    marginRight: 4,
   },
 
-  // ── 小贴士卡片 ──
+  // ── 引导提示框 ──
   tipCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: DESIGN.tipBg,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginTop: 16,
   },
-  tipIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    backgroundColor: DESIGN.card,
-    alignItems: 'center',
-    justifyContent: 'center',
+  tipIcon: {
+    marginRight: 12,
+    marginTop: 1,
   },
-  tipContent: {
+  tipText: {
     flex: 1,
-    marginLeft: 12,
-  },
-  tipTitle: {
-    fontFamily: 'BeVietnamPro_700Bold',
-    fontSize: 16,
-    color: DESIGN.primary,
-    marginBottom: 4,
-  },
-  tipBody: {
     fontFamily: 'BeVietnamPro_400Regular',
     fontSize: 14,
-    color: DESIGN.textTertiary,
-    lineHeight: 21, // 行间距 1.5 * 14
+    color: DESIGN.primary,
+    lineHeight: 22, // 行间距 ~1.6 * 14
   },
 
   // ── 底部全局导航栏 ──
   bottomNav: {
     flexDirection: 'row',
-    height: 64,
+    height: 60,
     backgroundColor: DESIGN.card,
     borderTopWidth: 1,
     borderTopColor: DESIGN.divider,
+    paddingHorizontal: 16,
   },
   navItem: {
     flex: 1,
@@ -353,12 +373,12 @@ const styles = StyleSheet.create({
   navItemInner: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   navItemActive: {
-    backgroundColor: DESIGN.tipBg,
+    backgroundColor: DESIGN.navActiveBg,
   },
   navItemLabel: {
     fontFamily: 'BeVietnamPro_400Regular',

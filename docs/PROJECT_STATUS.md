@@ -1,6 +1,6 @@
 # TidyZen 项目状态
 
-> 最后更新: 2026-06-16
+> 最后更新: 2026-06-17
 > Stitch 设计稿项目: `projects/12020854547316763944`（小徐的整理助手）
 
 ---
@@ -14,7 +14,7 @@
 | `app/(tabs)/index.tsx` | `/(tabs)/index` | 首页 - 整洁助手 | `ca284524557a40e79220171599fcc11f` |
 | `app/(tabs)/scan.tsx` | `/(tabs)/scan` | （无独立设计稿，纯跳转逻辑） | — |
 | `app/(tabs)/history.tsx` | `/(tabs)/history` | 整理记录列表 - TidyZen (新版) | `f3fd2c6f83c44f06a213eea248dd70f2` |
-| `app/(tabs)/profile.tsx` | `/(tabs)/profile` | 个人资料 - TidyZen | `608e6018d5ac475694f77ee7315e034e` |
+| `app/(tabs)/settings.tsx` | `/(tabs)/settings` | 设置 - TidyZen | `2ba523f848774f48ad89bc058bfaa6a5` |
 
 ### 核心分析流程
 
@@ -38,11 +38,14 @@
 
 | 代码文件 | 路由 | 设计稿名称 | 设计稿 ID |
 |---|---|---|---|
-| `app/settings.tsx` | `/settings` | 设置 - TidyZen | `2ba523f848774f48ad89bc058bfaa6a5` |
+| `app/profile.tsx` | `/profile` | 个人资料 - TidyZen | `608e6018d5ac475694f77ee7315e034e` |
 | `app/help.tsx` | `/help` | 常见问题 - 帮助中心 | `cce82e5029da401e8abcb1841c0aa087` |
 | `app/about.tsx` | `/about` | 关于 TidyZen | `5ed3f5382e4c45aa891b0d5c3f44aff2` |
 | `app/privacy.tsx` | `/privacy` | 隐私政策与服务协议 | `e5a9b6f546ab46a6aa114dbef6691c52` |
 | `app/account.tsx` | `/account` | 账号管理与安全 | `0a66e8f3ed8a4acd89a510721abe492a` |
+| `app/notification-preferences.tsx` | `/notification-preferences` | 通知偏好设置 (v2) | `44_通知偏好设置` |
+| `app/room-templates.tsx` | `/room-templates` | 房间模板管理 | `e0c84393752945698654ee40b07c9e34` |
+| `app/suggestion-preferences.tsx` | `/suggestion-preferences` | 建议库偏好 | `b5199e56d46f419e94ed689b09551153` |
 
 ---
 
@@ -53,7 +56,7 @@
 | 首页 | `/(tabs)/index` | ✅ 完成 | ⚠️ Mock | 评分卡片显示 `--`，无真实数据 |
 | 扫描 Tab | `/(tabs)/scan` | ✅ 完成 | ✅ 完成 | 纯跳转逻辑 |
 | 记录 Tab | `/(tabs)/history` | ✅ 完成 | ❌ Mock | `MOCK_RECORDS` 硬编码，未接 store |
-| 我的 Tab | `/(tabs)/profile` | ✅ 完成 | ❌ Mock | 统计数据硬编码 |
+| 设置 Tab | `/(tabs)/settings` | ✅ 完成 | ⚠️ 部分 | 开关有本地状态，清除功能未接 |
 | 拍照 | `/camera` | ✅ 完成 | ✅ 完成 | 权限 + 拍照 + base64 |
 | 分析中 | `/analyzing` | ✅ 完成 | ⚠️ Mock | 1.5s 延时后调 mock AI |
 | 分析结果 | `/result` | ✅ 完成 | ⚠️ Mock | mock 数据，无真实 API |
@@ -62,11 +65,14 @@
 | 视频教程 | `/video/[id]` | ⚠️ 占位 | ❌ 无 | 只有播放图标，无视频 |
 | 记录详情 | `/record/[id]` | ✅ 完成 | ❌ Mock | `record` 对象硬编码 |
 | 整理足迹 | `/trends` | ✅ 完成 | ❌ Mock | `TREND_DATA` 硬编码 |
-| 设置 | `/settings` | ✅ 完成 | ⚠️ 部分 | 开关有本地状态，清除功能未接 |
+| 个人资料 | `/profile` | ✅ 完成 | ❌ Mock | 统计数据硬编码 |
 | 帮助中心 | `/help` | ✅ 完成 | ✅ 完成 | 纯静态 |
 | 关于 | `/about` | ✅ 完成 | ✅ 完成 | 纯静态 |
 | 隐私政策 | `/privacy` | ✅ 完成 | ✅ 完成 | 纯静态 |
 | 账号安全 | `/account` | ✅ 完成 | ❌ 无 | 所有按钮无功能 |
+| 通知偏好 | `/notification-preferences` | ✅ 完成 v2 | ⚠️ 本地状态 | 2026-06-17 CC 复刻 v2 设计稿 |
+| 房间模板 | `/room-templates` | ✅ 完成 | ❌ Mock | 按设计稿 27 实现 |
+| 建议偏好 | `/suggestion-preferences` | ✅ 完成 | ❌ Mock | 按设计稿 11 实现 |
 
 ---
 
@@ -82,36 +88,83 @@
 
 ---
 
-## 四、待办事项
+## 四、设计稿复刻进度
 
-### 🔴 阻塞项
+**设计稿总数**: 44 张  |  **已映射**: 42 张  |  **页面文件**: 23 个
 
-- [ ] **对接真实 AI API** — `services/ai.ts` 中取消注释并配置 `EXPO_PUBLIC_AI_API_URL` / `EXPO_PUBLIC_AI_API_KEY`
-- [ ] **打通历史记录数据流** — `history.tsx` 替换 `MOCK_RECORDS` 为 store + storage
-- [ ] **首页接入真实数据** — 显示最新分析评分
+### ✅ 已复刻完成（20 个页面）
 
-### 🟡 重要
+| 页面 | 代码文件 | 对应设计稿 |
+|---|---|---|
+| 首页 | `app/(tabs)/index.tsx` | 38_首页_整洁助手 |
+| 扫描 | `app/(tabs)/scan.tsx` | 无独立设计稿 |
+| 记录 | `app/(tabs)/history.tsx` | 05/06/19/21/32/33 (6个变体，采用新版) |
+| 设置 | `app/(tabs)/settings.tsx` | 12_设置_TidyZen |
+| 拍照 | `app/camera.tsx` | 10/28/37/39 (v1-v3，采用v3) |
+| 分析中 | `app/analyzing.tsx` | 14/24 (过渡页 vs 简洁版，采用简洁版) |
+| 分析结果 | `app/result.tsx` | 09/20/35 (含置信度版) |
+| 纠错/场景 | `app/correction.tsx` | 01/23/31 (纠错版) |
+| 建议详情 | `app/detail/[id].tsx` | 02/13/17/36/40 (图文指引版) |
+| 视频教程 | `app/video/[id].tsx` | 07_视频教程播放界面 |
+| 记录详情 | `app/record/[id].tsx` | 22/43 (整理记录详情) |
+| 整理足迹 | `app/trends.tsx` | 26_整理足迹与趋势分析 |
+| 个人资料 | `app/profile.tsx` | 15_个人资料_TidyZen |
+| 帮助中心 | `app/help.tsx` | 03_常见问题_帮助中心 |
+| 关于 | `app/about.tsx` | 18_关于_TidyZen |
+| 隐私政策 | `app/privacy.tsx` | 08/41 (隐私政策与服务协议) |
+| 账号安全 | `app/account.tsx` | 16_账号管理与安全 |
+| 通知偏好 | `app/notification-preferences.tsx` | 44_通知偏好设置 (v2, 2026-06-17) |
+| 房间模板 | `app/room-templates.tsx` | 27_房间模板管理 |
+| 建议偏好 | `app/suggestion-preferences.tsx` | 11_建议库偏好 |
 
-- [ ] **视频内容** — 拍摄/制作 15 秒教程短视频
-- [ ] **record/[id] 接入真实数据** — 从 store/storage 读取而非硬编码
-- [ ] **trends 接入真实数据** — 从 storage 读取历史记录计算趋势
-- [ ] **detail/[id] 接入真实数据** — 从 result 的 suggestions 数组读取而非硬编码
-- [ ] **设置页功能** — 清除记录、建议偏好选择
+### ❌ 未实现（4 个设计稿页面）
 
-### 🟢 增强
-
-- [ ] 修改密码页面（设计稿 `8b89e986e67b4075aec03d775f952ed8`）
-- [ ] 勋章墙（设计稿 `da4f99bb7fca45ab8e478d93c2d756c4`）
-- [ ] 建议库偏好页面（设计稿 `b5199e56d46f419e94ed689b09551153`）
-- [ ] 房间模板管理（设计稿 `e0c84393752945698654ee40b07c9e34`）
-- [ ] 深度分析结果增强版（设计稿 `23c06919277841dd9ee70b79c50bc145`）
-- [ ] 图文整理秘籍弹窗（设计稿 `a1fdeba492f342daae83bb97aa24b9dd`）
-- [ ] 细节诊断放大查看（设计稿 `819c212c652141258cbf15ba9933deb3`）
-- [ ] ScoreGauge 真实 SVG 进度环（当前为简化版）
+| 设计稿 | 说明 | 优先级 |
+|---|---|---|
+| 29_修改密码_TidyZen | 独立页面 | 🟢 增强 |
+| 34_我的勋章墙_TidyZen | 全新页面，成就/勋章系统 | 🟢 增强 |
+| 42_服务条款 | 独立页面（privacy.tsx 只覆盖隐私政策） | 🟢 增强 |
+| 25_图文整理秘籍弹窗 | 弹窗组件，可嵌入 history.tsx | 🟢 增强 |
 
 ---
 
-## 五、Git 历史
+## 五、开发路线图（2026-06-17 更新）
+
+### P0 — 补齐缺失页面（设计稿 100% 覆盖）
+> 纯 UI，无后端依赖，CC 半天搞定
+
+- [ ] **服务条款页面** — 纯静态，新建 `app/terms.tsx`，15 min
+- [ ] **修改密码页面** — 表单页，新建 `app/change-password.tsx`，30 min
+- [ ] **整理秘籍弹窗** — 弹窗组件，嵌入 history.tsx 或独立组件，30 min
+- [ ] **勋章墙** — 列表+卡片，新建 `app/medals.tsx`，1 h
+
+### P1 — 打通数据流（从"能看"到"能用"）
+> 让拍照结果能持久化，App 算真正可用
+
+- [ ] **history/store/storage 串联** — 记录列表不再硬编码
+- [ ] **首页接入真实评分** — 显示最新一次分析的整洁度分数
+- [ ] **record/[id] + trends 接入 store** — 点击记录看详情，趋势图有真实数据
+
+### P2 — 核心能力对齐（AI 对接）
+> 依赖后端服务就绪
+
+- [ ] **services/ai.ts 对接真实 AI API** — 配置 `EXPO_PUBLIC_AI_API_URL` / `EXPO_PUBLIC_AI_API_KEY`
+- [ ] **视频教程内容** — 接入真实视频资源或拍摄 15s 教程
+
+### P3 — 上架准备
+- [ ] App Store 图标 / 启动屏 / 截图
+- [ ] ScoreGauge 真实 SVG 进度环（当前为简化版）
+- [ ] 各页面细节打磨
+
+### ✅ 已完成增强
+
+- [x] 建议库偏好页面（设计稿 `11_建议库偏好`）— 2026-06-16 实现
+- [x] 房间模板管理（设计稿 `27_房间模板管理`）— 2026-06-16 实现
+- [x] 通知偏好页面 v2（设计稿 `44_通知偏好设置`）— 2026-06-17 CC 复刻
+
+---
+
+## 六、Git 历史
 
 | Commit | 说明 |
 |---|---|
@@ -123,7 +176,7 @@
 
 ---
 
-## 六、设计稿迭代版本（参考）
+## 七、设计稿迭代版本（参考）
 
 这些是 Stitch 中的历史版本，已废弃但保留参考：
 
@@ -135,3 +188,4 @@
 | 场景选择 | 纠错版 (`2ad02696`) | 旧版 × 2 (`430a9abb`/`44d83b4e`) |
 | 记录列表 | 新版 (`f3fd2c6f`) | 旧版 × 5 |
 | 建议详情 | 图文版 (`a00a8045`) | 含视频版 (`d70ff7e5`)、放大版 × 2 |
+| 通知偏好 | v2 (`44_通知偏好设置`) | v1 (旧版 Switch 样式 + 3入口导航) |
