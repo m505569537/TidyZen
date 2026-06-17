@@ -78,7 +78,7 @@ export default function RoomTemplatesScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* ── 顶部导航栏 ── */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn}>
           <MaterialIcons name="arrow-back" size={24} color="#333333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>房间模板管理</Text>

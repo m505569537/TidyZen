@@ -112,7 +112,7 @@ export default function PrivacyScreen() {
             {/* 返回按钮 */}
             <TouchableOpacity
               style={styles.headerBackBtn}
-              onPress={() => router.back()}
+              onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
             >
               <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
             </TouchableOpacity>

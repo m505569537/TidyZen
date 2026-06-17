@@ -125,7 +125,7 @@ export default function TermsScreen() {
         <View style={styles.navBar}>
           <TouchableOpacity
             style={styles.backBtn}
-            onPress={() => router.back()}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
             activeOpacity={0.7}
           >
             <MaterialIcons name="arrow-back" size={24} color={PRIMARY} />

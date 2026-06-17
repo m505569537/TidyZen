@@ -18,7 +18,7 @@ export default function VideoScreen() {
         <SafeAreaView edges={['top']}>
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => router.back()}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
             activeOpacity={0.8}
           >
             <MaterialIcons name="close" size={20} color={colors.paperWhite} />
@@ -69,7 +69,7 @@ export default function VideoScreen() {
           {/* 我已学会按钮 */}
           <TouchableOpacity
             style={styles.learnedButton}
-            onPress={() => router.back()}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
             activeOpacity={0.8}
           >
             <MaterialIcons name="check" size={20} color={colors.paperWhite} />

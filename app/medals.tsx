@@ -71,7 +71,7 @@ export default function MedalsScreen() {
       {/* ── 顶部导航栏 ── */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
           style={styles.backBtn}
           activeOpacity={0.6}
           hitSlop={12}

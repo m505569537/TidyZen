@@ -118,7 +118,7 @@ export default function NotificationPreferencesScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* ── 顶部导航栏 ── */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.6}>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={styles.backBtn} activeOpacity={0.6}>
           <MaterialIcons name="arrow-back" size={24} color={DESIGN.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>通知偏好</Text>
