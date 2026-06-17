@@ -74,7 +74,9 @@ export default function SettingsScreen() {
 
         <Text style={styles.groupTitle}>系统设置</Text>
         <View style={styles.groupCard}>
-          <SettingItem icon="notifications" label="通知偏好" subtitle="管理推送通知和提醒时间" onPress={() => router.push('/notification-preferences')} />
+          <SettingItem icon="notifications" label="消息通知" showArrow={false}
+            right={<Switch value={notify} onValueChange={setNotify} />}
+          />
           <SettingItem icon="delete-sweep" label="清除本地照片缓存" subtitle="已开启隐私保护" showArrow={false}
             right={<Text style={styles.cacheSize}>124 MB</Text>}
           />
