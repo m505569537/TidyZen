@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius } from '../../constants/theme';
+import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
 
 // ── 环形进度条（纯 RN，无 SVG 依赖）──
 function CircularProgress({
@@ -185,7 +185,8 @@ function FeatureCard({
       <VerticalGradient bottomColor="#A0A4A8" topColor="#FAFBFC" height={80}>
         <View style={styles.cardTags}>
           <View style={[styles.tag, styles.tagTime]}>
-            <Text style={styles.tagText}>{time}</Text>
+            <MaterialIcons name="access-time" size={12} color={colors.primary} />
+            <Text style={[styles.tagText, styles.tagTimeText]}>{time}</Text>
           </View>
           <View style={[styles.tag, { backgroundColor: tagColor }]}>
             <Text style={[styles.tagText, { color: tagTextColor }]}>{tag}</Text>
@@ -241,12 +242,14 @@ export default function HomeScreen() {
         </View>
 
         {/* ── 二、整洁得分展示区（环形进度条 + 中心文字）── */}
-        <View style={styles.scoreSection}>
-          <View style={styles.ringWrapper}>
-            <CircularProgress percentage={85} />
-            <View style={styles.ringCenter}>
-              <Text style={styles.ringScoreText}>85</Text>
-              <Text style={styles.ringScoreLabel}>当前得分</Text>
+        <View style={styles.scoreCard}>
+          <View style={styles.scoreSection}>
+            <View style={styles.ringWrapper}>
+              <CircularProgress percentage={85} />
+              <View style={styles.ringCenter}>
+                <Text style={styles.ringScoreText}>85</Text>
+                <Text style={styles.ringScoreLabel}>当前得分</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -339,10 +342,16 @@ const styles = StyleSheet.create({
   },
 
   /* ── 整洁得分展示区 ── */
-  scoreSection: {
-    alignItems: 'center',
+  scoreCard: {
+    backgroundColor: colors.paperWhite,
+    borderRadius: radius.lg,
+    padding: spacing.md,
     marginTop: spacing.lg,
     marginBottom: spacing.lg,
+    ...shadows.card,
+  },
+  scoreSection: {
+    alignItems: 'center',
   },
   ringWrapper: {
     width: 200,
@@ -379,7 +388,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignSelf: 'center',
     backgroundColor: colors.errorContainer,
-    borderRadius: 12,
+    borderRadius: 20,
     height: 36,
     paddingHorizontal: spacing.md,
     gap: spacing.sm,
@@ -446,7 +455,13 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   tagTime: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#D1FAE5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tagTimeText: {
+    color: colors.primary,
   },
   tagText: {
     fontFamily: 'BeVietnamPro_600SemiBold',
