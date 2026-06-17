@@ -68,8 +68,8 @@ export default function SettingsScreen() {
 
         <Text style={styles.groupTitle}>个性化设置</Text>
         <View style={styles.groupCard}>
-          <SettingItem icon="home" label="房间模板管理" subtitle="租房、宿舍、卧室" onPress={() => {}} />
-          <SettingItem icon="tune" label="建议库偏好" onPress={() => {}} />
+          <SettingItem icon="home" label="房间模板管理" subtitle="租房、宿舍、卧室" onPress={() => router.push('/room-templates')} />
+          <SettingItem icon="tune" label="建议库偏好" onPress={() => router.push('/suggestion-preferences')} />
         </View>
 
         <Text style={styles.groupTitle}>系统设置</Text>
