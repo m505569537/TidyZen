@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius } from '../constants/theme';
@@ -44,8 +44,11 @@ export default function AnalyzingScreen() {
 
   // Actual AI analysis
   useEffect(() => {
+    // 缺少照片：异常入口（直接 push /analyzing 等），回到 scan 落地页并提示
     if (!photoBase64) {
-      router.replace('/camera');
+      Alert.alert('未找到待分析照片', '请重新拍照或从相册选择。', [
+        { text: '好的', onPress: () => router.replace('/(tabs)/scan') },
+      ]);
       return;
     }
 
@@ -56,7 +59,9 @@ export default function AnalyzingScreen() {
         setResult(result);
         router.replace('/result');
       } catch {
-        router.replace('/camera');
+        Alert.alert('分析失败', 'AI 分析未能完成，请稍后重试。', [
+          { text: '返回', onPress: () => router.replace('/(tabs)/scan') },
+        ]);
       }
     };
 

@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
 import { useRef, useState } from 'react';
 import { colors, typography, spacing, radius } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
@@ -16,8 +17,12 @@ export default function CameraScreen() {
 
   const handleBack = () => {
     setActive(false);
-    // 直接回首页，不经过 scan tab（避免 scan 的 useEffect 再次 push 到 camera）
-    router.replace('/(tabs)');
+    // 优先回到上一页（通常是 scan tab 落地页）；无历史时兜底到 scan tab
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/scan');
+    }
   };
 
   if (!permission) {
@@ -56,6 +61,34 @@ export default function CameraScreen() {
       }
     } catch {
       Alert.alert('拍照失败', '请重试');
+    }
+  };
+
+  const pickFromGallery = async () => {
+    try {
+      // 请求相册权限（首次调用时弹出系统授权）
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert('需要相册权限', '请在系统设置中允许 TidyZen 访问相册。');
+        return;
+      }
+
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (res.canceled) return;
+      const asset = res.assets?.[0];
+      if (asset?.uri && asset?.base64) {
+        setPhoto(asset.uri, asset.base64);
+        router.push('/analyzing');
+      } else {
+        Alert.alert('选择失败', '无法读取所选图片，请重试。');
+      }
+    } catch {
+      Alert.alert('选择失败', '打开相册时出错，请重试。');
     }
   };
 
@@ -140,7 +173,7 @@ export default function CameraScreen() {
         <SafeAreaView edges={['bottom']}>
           <View style={styles.bottomBar}>
             {/* 左侧相册按钮 */}
-            <TouchableOpacity style={styles.sideButton}>
+            <TouchableOpacity style={styles.sideButton} onPress={pickFromGallery} activeOpacity={0.7}>
               <MaterialIcons name="photo-library" size={24} color={colors.onSurface} />
             </TouchableOpacity>
 

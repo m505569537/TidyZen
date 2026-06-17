@@ -10,7 +10,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "TidyZen 需要访问相机来拍摄房间照片，以便 AI 分析房间整洁度并提供整理建议。"
+        "NSCameraUsageDescription": "TidyZen 需要访问相机来拍摄房间照片，以便 AI 分析房间整洁度并提供整理建议。",
+        "NSPhotoLibraryUsageDescription": "TidyZen 需要访问相册来选择房间照片进行 AI 整洁度分析。"
       },
       "bundleIdentifier": "com.anonymous.tidyzen"
     },
@@ -37,6 +38,12 @@
         "expo-camera",
         {
           "cameraPermission": "TidyZen 需要访问相机来拍摄房间照片。"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "TidyZen 需要访问相册来选择房间照片进行整洁度分析。"
         }
       ]
     ]
