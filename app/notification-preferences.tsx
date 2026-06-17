@@ -181,7 +181,7 @@ export default function NotificationPreferencesScreen() {
           icon="account-outline"
           label="我的"
           active={false}
-          onPress={() => router.replace('/(tabs)/profile')}
+          onPress={() => router.replace('/profile')}
         />
       </View>
     </SafeAreaView>

@@ -88,7 +88,7 @@ export default function ProfileScreen() {
             <Text style={styles.settingsLabel}>{'账号安全'}</Text>
             <MaterialIcons name='chevron-right' size={22} color={colors.outline} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.settingsRow} activeOpacity={0.6}>
+          <TouchableOpacity style={styles.settingsRow} activeOpacity={0.6} onPress={() => router.push('/notification-preferences')}>
             <View style={[styles.settingsIconWrap, { backgroundColor: colors.primaryContainer + '40' }]}>
               <MaterialIcons name='notifications' size={20} color={colors.primary} />
             </View>
