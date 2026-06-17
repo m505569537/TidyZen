@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
@@ -238,6 +238,7 @@ export default function HomeScreen() {
 
   // 使用最新一条记录的得分；无记录时回退到 85
   const latestScore = records[0]?.score ?? 85;
+  const latestThumbnail = records[0]?.thumbnailUri;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -256,6 +257,9 @@ export default function HomeScreen() {
 
         {/* ── 二、整洁得分展示区（环形进度条 + 中心文字）── */}
         <View style={styles.scoreCard}>
+          {latestThumbnail && (
+            <Image source={{ uri: latestThumbnail }} style={styles.latestThumbnail} />
+          )}
           <View style={styles.scoreSection}>
             <View style={styles.ringWrapper}>
               <CircularProgress percentage={latestScore} />
@@ -365,6 +369,16 @@ const styles = StyleSheet.create({
   },
   scoreSection: {
     alignItems: 'center',
+  },
+  latestThumbnail: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    width: 56,
+    height: 56,
+    borderRadius: radius.md,
+    borderWidth: 2,
+    borderColor: colors.primary,
   },
   ringWrapper: {
     width: 200,

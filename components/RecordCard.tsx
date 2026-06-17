@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, radius, spacing, shadows } from '../constants/theme';
 import type { HistoryRecord } from '../types/analysis';
@@ -31,9 +31,13 @@ export function RecordCard({ record, onPress }: RecordCardProps) {
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
-      {/* 左：100x80 圆角缩略图 */}
+      {/* 左：80x80 圆角缩略图 */}
       <View style={styles.thumbnail}>
-        <MaterialIcons name="photo" size={28} color={colors.outlineVariant} />
+        {record.thumbnailUri ? (
+          <Image source={{ uri: record.thumbnailUri }} style={styles.thumbnailImage} />
+        ) : (
+          <MaterialIcons name="photo" size={28} color={colors.outlineVariant} />
+        )}
       </View>
 
       {/* 中：信息区 */}
@@ -89,6 +93,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceContainer,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
   },
   info: {
     flex: 1,
