@@ -43,15 +43,18 @@ const BUILD_ANALYSIS_PROMPT = `你是一个专业的室内整洁度分析师。�
   "overall_notes": "用一两句中文描述整体观感，指出主要杂物分布位置和整洁度问题"
 }
 
-bbox 说明：[x, y, w, h] 为该类别杂物的整体外接矩形，所有值均归一化到 0-1（x、y 为左上角坐标，w、h 为宽高）。
+bbox 说明：[x, y, w, h] 为该类别杂物的整体外接矩形，所有值均归一化到 0-1（x、y 为左上角坐标，w、h 为宽高）。bbox 必须精确覆盖该物品本体，不要把周围的桌面/墙面/地面区域也圈进去。
 
 要求：
 1. 只识别真实可见的杂物，不要凭空捏造。
-2. 如果画面非常整洁，clutter_items 可以为空数组。
-3. confidence 要诚实反映识别把握，不要全部填 0.95。
-4. area_ratio 要符合视觉感受，不要超过 1。
-5. 严格按 JSON 输出，不要任何前后缀。
-6. 如果 scene 是 unknown，overall_notes 必须说明为什么这不是室内房间照片。`;
+2. **只识别你非常有把握的物品。如果不确定一个物体到底是什么，绝对不要把它加入 clutter_items。** 宁可漏报也不要误报——比如不要把笔记本电脑屏幕、显示器、电视画面误判为"纸箱"，不要把家具(床、桌、椅、柜)、书架、书籍封面上的图案、墙上的画/海报、装饰品当成杂物。
+3. **bbox 必须严格贴合物品的真实轮廓**，不能用整个房间或大片背景充数；如果一个类别的物品分散在多处，给出包含主要物品的最小外接矩形即可。
+4. **场景判断**：如果画面里出现笔记本电脑/台式机/显示器/键盘/办公椅+桌面，scene 必须填 desk_area。在 desk_area 场景下，只识别桌面上真正堆积的物理杂物（散乱衣物、垃圾、外卖盒、纠缠的电线、空瓶子等），**不要把屏幕里显示的内容、桌面上正常使用中的电脑/键盘/鼠标/显示器当成杂物**。
+5. 如果画面非常整洁，clutter_items 可以为空数组——这是合法且常见的结果。
+6. confidence 要诚实反映识别把握。只有当你能清晰看出物品形状、且 100% 确定它属于所选类别时，才给出 ≥ 0.7 的分数；任何模糊、遮挡、看不清的物体应当低于 0.7（这些会被过滤掉）。不要全部填 0.95。
+7. area_ratio 要符合视觉感受，不要超过 1。
+8. 严格按 JSON 输出，不要任何前后缀。
+9. 如果 scene 是 unknown，overall_notes 必须说明为什么这不是室内房间照片。`;
 
 /** 生成唯一 ID */
 function generateId(): string {
@@ -182,8 +185,8 @@ export async function analyzeImage(
     throw new Error('NOT_ROOM');
   }
 
-  // 后处理
-  const filteredItems = (raw.clutter_items ?? []).filter((item) => item.confidence >= 0.6);
+  // 后处理：只保留模型高置信度（>= 0.7）的识别项，避免误报（如笔记本屏幕被识别为纸箱）。
+  const filteredItems = (raw.clutter_items ?? []).filter((item) => item.confidence >= 0.7);
   const score = calculateScore(filteredItems, raw.lighting);
   const maxConfidence = filteredItems.length > 0
     ? Math.max(...filteredItems.map((i) => i.confidence))
@@ -199,7 +202,7 @@ export async function analyzeImage(
     overallNotes: raw.overall_notes,
     suggestions,
     maxConfidence,
-    needsCorrection: maxConfidence < 0.6,
+    needsCorrection: maxConfidence < 0.7,
     createdAt: new Date().toISOString(),
     photoUri: '',
     thumbnailUri: undefined,

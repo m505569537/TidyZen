@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
 import { Button } from '../../components';
 import { BoundingBox } from '../../components/BoundingBox';
@@ -11,26 +12,48 @@ export default function DetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const photoUri = useAnalysisStore((s) => s.photoUri);
   const result = useAnalysisStore((s) => s.result);
+  const [photoSize, setPhotoSize] = useState({ width: 0, height: 0 });
 
-  const suggestion = {
-    title: '椅子急救法',
-    type: 'must_do' as const,
-    difficulty: 'easy' as const,
-    time_cost: '3分钟',
-    items_needed: [] as string[],
-    expected_effect: '视觉整洁度+40%',
-    content: '1. 穿过的衣服全部挂进衣柜（哪怕只是挂着）\n2. 干净衣服叠成方块竖放（像摆书一样）\n3. 脏衣服直接踢进洗衣篮',
-    acceptance_criteria: '椅子和床单露出 80% 原色',
-    video_id: id,
-  };
+  // 从分析结果里查找当前建议；如果丢失（比如冷启动直接进详情页）
+  // 给一个回退提示并允许返回。
+  const suggestion = result?.suggestions.find((s) => s.id === id);
+
+  if (!suggestion) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>分析详情</Text>
+          <View style={styles.backBtn} />
+        </View>
+        <View style={styles.emptyState}>
+          <MaterialIcons name="search-off" size={48} color={colors.outlineVariant} />
+          <Text style={styles.emptyTitle}>未找到该建议</Text>
+          <Text style={styles.emptyDesc}>请重新拍照分析后再查看详情。</Text>
+          <TouchableOpacity
+            style={styles.rescanButton}
+            onPress={() => {
+              useAnalysisStore.getState().reset();
+              router.replace('/(tabs)/scan');
+            }}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="refresh" size={20} color={colors.onPrimary} />
+            <Text style={styles.rescanText}>重新扫描</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const steps = suggestion.content.split('\n').filter(Boolean);
+  const clutterItems = result?.clutterItems ?? [];
 
-  // Demo bounding boxes for the photo overlay
-  const demoBoxes: Array<{ bbox: [number, number, number, number]; label: string; color: string }> = [
-    { bbox: [0.12, 0.28, 0.25, 0.2], label: '衣物', color: '#A5D6A7' },
-    { bbox: [0.5, 0.22, 0.22, 0.22], label: '纸箱', color: '#90CAF9' },
-  ];
+  // bbox 颜色：高置信度绿色，低置信度琥珀色——与 result 页保持一致
+  const getBoxColor = (confidence: number) =>
+    confidence >= 0.8 ? colors.healingGreen : colors.warmAmber;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -48,21 +71,28 @@ export default function DetailScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 实景结果展示区 */}
         <View style={styles.photoCard}>
-          <View style={styles.photoContainer}>
+          <View
+            style={styles.photoContainer}
+            onLayout={(e) => {
+              const { width, height } = e.nativeEvent.layout;
+              setPhotoSize({ width, height });
+            }}
+          >
             {photoUri ? (
               <>
                 <Image source={{ uri: photoUri }} style={styles.photoImage} />
-                {/* 叠加彩色标注框 */}
-                {demoBoxes.map((box, i) => (
-                  <BoundingBox
-                    key={i}
-                    bbox={box.bbox}
-                    label={box.label}
-                    containerWidth={300}
-                    containerHeight={220}
-                    color={box.color}
-                  />
-                ))}
+                {/* 用真实的 clutterItems 叠加标注框（等容器拿到尺寸后再渲染，否则比例会错） */}
+                {photoSize.width > 0 &&
+                  clutterItems.map((item, i) => (
+                    <BoundingBox
+                      key={i}
+                      bbox={item.bbox}
+                      label={item.display_name}
+                      containerWidth={photoSize.width}
+                      containerHeight={photoSize.height}
+                      color={getBoxColor(item.confidence)}
+                    />
+                  ))}
               </>
             ) : (
               <View style={styles.photoPlaceholder}>
@@ -75,7 +105,7 @@ export default function DetailScreen() {
           {/* 统计提示条 */}
           <View style={styles.statsBar}>
             <Text style={styles.statsText}>
-              发现 {result?.clutterItems.length ?? 2} 处可优化区域
+              发现 {clutterItems.length} 处可优化区域
             </Text>
             <Text style={styles.statsDivider}>·</Text>
             <Text style={styles.statsText}>
@@ -84,10 +114,10 @@ export default function DetailScreen() {
           </View>
         </View>
 
-        {/* 优化清单标题 */}
-        <Text style={styles.sectionTitle}>优化清单</Text>
+        {/* 当前建议标题（替换原来的硬编码 "椅子急救法"） */}
+        <Text style={styles.sectionTitle}>{suggestion.title}</Text>
 
-        {/* 优化任务列表 */}
+        {/* 优化任务列表：每一步对应一张卡片 */}
         {steps.map((step, index) => (
           <View key={index} style={styles.taskCard}>
             {/* 左侧图标 */}
@@ -102,17 +132,27 @@ export default function DetailScreen() {
               />
             </View>
 
-            {/* 中间内容 */}
+            {/* 中间内容：展示真实的步骤文本 */}
             <View style={styles.taskContent}>
-              <Text style={styles.taskTitle}>
-                {index === 0 ? '衣物归类' : '纸箱处理'}
+              <Text style={styles.taskTitle} numberOfLines={2}>
+                {step}
               </Text>
               <View style={styles.taskTags}>
-                <View style={[styles.taskTag, { backgroundColor: '#FFE0E0' }]}>
-                  <Text style={[styles.taskTagText, { color: '#D32F2F' }]}>必做</Text>
+                <View style={[
+                  styles.taskTag,
+                  { backgroundColor: suggestion.type === 'must_do' ? '#FFE0E0' : '#E8F5E9' },
+                ]}>
+                  <Text style={[
+                    styles.taskTagText,
+                    { color: suggestion.type === 'must_do' ? '#D32F2F' : '#388E3C' },
+                  ]}>
+                    {suggestion.type === 'must_do' ? '必做' : '备选'}
+                  </Text>
                 </View>
                 <View style={[styles.taskTag, { backgroundColor: '#E8F5E9' }]}>
-                  <Text style={[styles.taskTagText, { color: '#388E3C' }]}>整理贴士</Text>
+                  <Text style={[styles.taskTagText, { color: '#388E3C' }]}>
+                    {suggestion.difficulty === 'easy' ? '简单' : '中等'}
+                  </Text>
                 </View>
                 <MaterialIcons name="star" size={14} color={colors.warmAmber} />
               </View>
@@ -123,18 +163,18 @@ export default function DetailScreen() {
           </View>
         ))}
 
-        {/* 氛围提示卡片 */}
-        <View style={styles.ambianceCard}>
-          <View style={styles.ambianceIconWrap}>
-            <MaterialIcons name="lightbulb" size={22} color={colors.softBlue} />
+        {/* 验收标准 */}
+        {suggestion.acceptance_criteria && (
+          <View style={styles.ambianceCard}>
+            <View style={styles.ambianceIconWrap}>
+              <MaterialIcons name="check-circle" size={22} color={colors.primary} />
+            </View>
+            <View style={styles.ambianceContent}>
+              <Text style={styles.ambianceTitle}>完成标准</Text>
+              <Text style={styles.ambianceDesc}>{suggestion.acceptance_criteria}</Text>
+            </View>
           </View>
-          <View style={styles.ambianceContent}>
-            <Text style={styles.ambianceTitle}>氛围提示</Text>
-            <Text style={styles.ambianceDesc}>
-              拉开窗帘，打开主灯，房间会显得更宽敞明亮
-            </Text>
-          </View>
-        </View>
+        )}
 
         {/* 视频教程入口 */}
         {suggestion.video_id && (
@@ -337,5 +377,27 @@ const styles = StyleSheet.create({
     fontFamily: 'BeVietnamPro_600SemiBold',
     fontSize: typography.bodyLg.fontSize,
     color: colors.onPrimary,
+  },
+
+  // 找不到 suggestion 时的空状态
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.pageMargin,
+    gap: spacing.sm,
+  },
+  emptyTitle: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.headlineMd.fontSize,
+    color: colors.onSurface,
+    marginTop: spacing.sm,
+  },
+  emptyDesc: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.bodyMd.fontSize,
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginBottom: spacing.md,
   },
 });

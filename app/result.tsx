@@ -11,7 +11,7 @@ import { BoundingBox, ConfidenceBadge } from '../components';
 import type { HistoryRecord } from '../types/analysis';
 
 export default function ResultScreen() {
-  const { result, setCorrecting, reset } = useAnalysisStore();
+  const { result, elapsedMs, setCorrecting, reset } = useAnalysisStore();
   const [photoSize, setPhotoSize] = useState({ width: 0, height: 0 });
   const savedIdRef = useRef<string | null>(null);
 
@@ -51,6 +51,15 @@ export default function ResultScreen() {
     if (score >= 70) return colors.healingGreen;
     if (score >= 40) return colors.warmAmber;
     return colors.error;
+  };
+
+  // 把毫秒数格式化成"耗时约 X 秒/分钟"。<60s 显示秒，否则向上取整成分钟。
+  const formatElapsed = (ms: number | null): string => {
+    if (!ms || ms <= 0) return '耗时约 5 秒';
+    const seconds = Math.max(1, Math.round(ms / 1000));
+    if (seconds < 60) return `耗时约 ${seconds} 秒`;
+    const minutes = Math.max(1, Math.round(seconds / 60));
+    return `耗时约 ${minutes} 分钟`;
   };
 
   return (
@@ -103,7 +112,7 @@ export default function ResultScreen() {
             </View>
             <View style={styles.photoInfoPill}>
               <MaterialIcons name="timer" size={14} color={colors.onSurfaceVariant} />
-              <Text style={styles.photoInfoPillText}>耗时约 5 分钟</Text>
+              <Text style={styles.photoInfoPillText}>{formatElapsed(elapsedMs)}</Text>
             </View>
           </View>
         </View>

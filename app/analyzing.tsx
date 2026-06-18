@@ -53,11 +53,14 @@ export default function AnalyzingScreen() {
     }
 
     const runAnalysis = async () => {
+      const startedAt = Date.now();
       try {
         console.log('[Analyzing] photoBase64 length:', photoBase64?.length ?? 0);
         const result = await analyzeImage(photoBase64);
         result.photoUri = useAnalysisStore.getState().photoUri ?? '';
-        setResult(result);
+        const elapsedMs = Date.now() - startedAt;
+        console.log('[Analyzing] completed in', elapsedMs, 'ms');
+        setResult(result, elapsedMs);
         router.replace('/result');
       } catch (e: any) {
         // 详细错误日志：打印完整错误对象，便于诊断

@@ -12,13 +12,16 @@ interface AnalysisState {
   // 分析结果
   result: AnalysisResult | null;
 
+  // 本次分析耗时（毫秒）。在 result.tsx 上展示"耗时约 X 秒/分钟"。
+  elapsedMs: number | null;
+
   // 用户纠错选择的场景
   selectedScenarios: ScenarioId[];
 
   // 操作
   setPhoto: (uri: string, base64: string) => void;
   setAnalyzing: () => void;
-  setResult: (result: AnalysisResult) => void;
+  setResult: (result: AnalysisResult, elapsedMs?: number) => void;
   setCorrecting: () => void;
   setSelectedScenarios: (scenarios: ScenarioId[]) => void;
   reset: () => void;
@@ -29,6 +32,7 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   photoUri: null,
   photoBase64: null,
   result: null,
+  elapsedMs: null,
   selectedScenarios: [],
 
   setPhoto: (uri, base64) =>
@@ -36,7 +40,8 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
 
   setAnalyzing: () => set({ step: 'analyzing' }),
 
-  setResult: (result) => set({ result, step: 'result' }),
+  setResult: (result, elapsedMs) =>
+    set({ result, elapsedMs: elapsedMs ?? null, step: 'result' }),
 
   setCorrecting: () => set({ step: 'correcting', selectedScenarios: [] }),
 
@@ -48,6 +53,7 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
       photoUri: null,
       photoBase64: null,
       result: null,
+      elapsedMs: null,
       selectedScenarios: [],
     }),
 }));
