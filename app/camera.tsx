@@ -5,6 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import * as FileSystem from 'expo-file-system';
 import { useRef, useState } from 'react';
 import { colors, typography, spacing, radius } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
@@ -12,19 +13,38 @@ import { BoundingBox } from '../components';
 
 /**
  * Re-encode any image (HEIC/PNG/JPEG/…) to JPEG and return a fresh base64.
- * Uses the stable manipulateAsync API (deprecated but reliable).
+ * Step 1: Use manipulateAsync to convert to JPEG file
+ * Step 2: Use FileSystem to read the JPEG file as base64 (more reliable)
  */
 async function toJpegBase64(uri: string): Promise<{ uri: string; base64: string }> {
-  const result = await ImageManipulator.manipulateAsync(
-    uri,
-    [],  // no transformations, just re-encode
-    { format: SaveFormat.JPEG, compress: 0.8, base64: true }
-  );
-  if (!result.base64) {
-    throw new Error('图片转码失败：未返回 base64');
+  console.log('[camera] toJpegBase64: input uri=', uri);
+
+  // Step 1: Convert to JPEG file
+  const result = await manipulateAsync(uri, [], {
+    format: SaveFormat.JPEG,
+    compress: 0.8,
+  });
+  console.log('[camera] toJpegBase64: converted uri=', result.uri);
+
+  // Step 2: Read the JPEG file as base64 using FileSystem
+  const base64 = await FileSystem.readAsStringAsync(result.uri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+
+  if (!base64) {
+    throw new Error('图片转码失败：无法读取 base64');
   }
-  console.log('[camera] toJpegBase64: uri=', result.uri, 'base64 length=', result.base64.length);
-  return { uri: result.uri, base64: result.base64 };
+
+  // Verify JPEG signature (FF D8 FF = /9j/ in base64)
+  const prefix = base64.slice(0, 6);
+  const isJpeg = prefix.startsWith('/9j/');
+  console.log('[camera] toJpegBase64: base64 prefix=', prefix, 'isJpeg=', isJpeg, 'length=', base64.length);
+
+  if (!isJpeg) {
+    console.warn('[camera] WARNING: output is NOT JPEG! Prefix:', prefix);
+  }
+
+  return { uri: result.uri, base64 };
 }
 
 export default function CameraScreen() {
