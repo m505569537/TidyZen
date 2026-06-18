@@ -4,10 +4,28 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { useRef, useState } from 'react';
 import { colors, typography, spacing, radius } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
 import { BoundingBox } from '../components';
+
+/**
+ * Re-encode any image (HEIC/PNG/JPEG/…) to JPEG and return a fresh base64.
+ * The AI API only accepts bmp/gif/png/jpeg/webp — iOS HEIC photos must be
+ * transcoded, not just relabeled. `quality: 0.8` on the picker/camera does
+ * not reliably force JPEG on iOS 17+, so we run everything through the
+ * manipulator unconditionally.
+ */
+async function toJpegBase64(uri: string): Promise<{ uri: string; base64: string }> {
+  const ctx = ImageManipulator.manipulate(uri);
+  const rendered = await ctx.renderAsync();
+  const result = await rendered.saveAsync({ format: SaveFormat.JPEG, base64: true, compress: 0.8 });
+  if (!result.base64) {
+    throw new Error('图片转码失败：未返回 base64');
+  }
+  return { uri: result.uri, base64: result.base64 };
+}
 
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -54,13 +72,16 @@ export default function CameraScreen() {
   const takePicture = async () => {
     if (!cameraRef.current) return;
     try {
-      const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.8 });
-      if (photo?.uri && photo?.base64) {
-        setPhoto(photo.uri, photo.base64);
-        router.push('/analyzing');
-      }
-    } catch {
-      Alert.alert('拍照失败', '请重试');
+      // 不再向 takePictureAsync 索取 base64：原生层返回的可能是 HEIC，
+      // 由 toJpegBase64() 统一转码为 JPEG，避免 AI API 因格式不支持而 400。
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
+      if (!photo?.uri) return;
+      const { uri, base64 } = await toJpegBase64(photo.uri);
+      setPhoto(uri, base64);
+      router.push('/analyzing');
+    } catch (e: any) {
+      console.error('[camera] takePicture failed:', e);
+      Alert.alert('拍照失败', e?.message ?? '请重试');
     }
   };
 
@@ -76,22 +97,25 @@ export default function CameraScreen() {
       // 注意：iOS 模拟器在 allowsEditing:true 时，系统裁剪 UI 的「Choose」按钮
       // 会卡住/不可点（PHPicker bug）。这里改为直接返回原图：
       // 用户点选 → 系统自动确认 → 直接进入分析页。
+      // 同样不索取 base64：iOS 17+ 即便指定 quality 也可能返回 HEIC，
+      // 统一交给 toJpegBase64() 转码。
       const res = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         quality: 0.8,
-        base64: true,
       });
 
       if (res.canceled) return;
       const asset = res.assets?.[0];
-      if (asset?.uri && asset?.base64) {
-        setPhoto(asset.uri, asset.base64);
-        router.push('/analyzing');
-      } else {
+      if (!asset?.uri) {
         Alert.alert('选择失败', '无法读取所选图片，请重试。');
+        return;
       }
-    } catch {
-      Alert.alert('选择失败', '打开相册时出错，请重试。');
+      const { uri, base64 } = await toJpegBase64(asset.uri);
+      setPhoto(uri, base64);
+      router.push('/analyzing');
+    } catch (e: any) {
+      console.error('[camera] pickFromGallery failed:', e);
+      Alert.alert('选择失败', e?.message ?? '打开相册时出错，请重试。');
     }
   };
 
