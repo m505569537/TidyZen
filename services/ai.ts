@@ -107,7 +107,9 @@ export async function analyzeImage(
 
   let raw: AnalysisRawResponse;
   try {
+    console.log('[AI] Raw API content:', content.slice(0, 500));
     raw = JSON.parse(content);
+    console.log('[AI] Parsed:', JSON.stringify(raw).slice(0, 300));
   } catch (e) {
     throw new Error(`AI API 返回非法 JSON: ${content.slice(0, 200)}`);
   }
