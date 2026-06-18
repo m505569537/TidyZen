@@ -161,10 +161,16 @@ export async function analyzeImage(
     if (match) content = match[0];
   }
 
+  // Strip markdown code blocks if present (mimo sometimes wraps JSON in ```json ... ```)
+  let cleanContent = content.trim();
+  if (cleanContent.startsWith('```')) {
+    cleanContent = cleanContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  }
+
   let raw: AnalysisRawResponse;
   try {
-    console.log('[AI] Raw API content:', content.slice(0, 500));
-    raw = JSON.parse(content);
+    console.log('[AI] Raw API content:', cleanContent.slice(0, 500));
+    raw = JSON.parse(cleanContent);
     console.log('[AI] Parsed:', JSON.stringify(raw).slice(0, 300));
   } catch (e) {
     throw new Error(`AI API 返回非法 JSON: ${content.slice(0, 200)}`);
