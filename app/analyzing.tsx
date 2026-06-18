@@ -58,10 +58,13 @@ export default function AnalyzingScreen() {
         result.photoUri = useAnalysisStore.getState().photoUri ?? '';
         setResult(result);
         router.replace('/result');
-      } catch {
-        Alert.alert('分析失败', 'AI 分析未能完成，请稍后重试。', [
-          { text: '返回', onPress: () => router.replace('/(tabs)/scan') },
-        ]);
+      } catch (e: any) {
+        const isNotRoom = e?.message === 'NOT_ROOM';
+        Alert.alert(
+          isNotRoom ? '无法识别房间' : '分析失败',
+          isNotRoom ? '这张照片似乎不是室内房间场景，请重新拍摄一张房间照片。' : 'AI 分析未能完成，请稍后重试。',
+          [{ text: '好的', onPress: () => router.replace('/(tabs)/scan') }],
+        );
       }
     };
 

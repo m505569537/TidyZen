@@ -14,7 +14,7 @@ const BUILD_ANALYSIS_PROMPT = `你是一个专业的室内整洁度分析师。�
 返回的 JSON 必须包含以下字段（不要包含任何额外的解释文本，不要使用 markdown 代码块）：
 
 {
-  "scene": "场景类型，必须是以下之一: bedroom | living_room | bathroom | desk_area | floor",
+  "scene": "场景类型，必须是以下之一: bedroom | living_room | bathroom | desk_area | floor | unknown（如果照片不是室内房间场景，如风景、植物、人物等，必须填 unknown）",
   "clutter_items": [
     {
       "label": "杂物类别，必须是以下之一: clothing | cardboard_box | cable | book | bottle | food_container | shoe | pillow_blanket | trash | other_clutter",
@@ -36,7 +36,8 @@ bbox 说明：[x, y, w, h] 为该类别杂物的整体外接矩形，所有值�
 2. 如果画面非常整洁，clutter_items 可以为空数组。
 3. confidence 要诚实反映识别把握，不要全部填 0.95。
 4. area_ratio 要符合视觉感受，不要超过 1。
-5. 严格按 JSON 输出，不要任何前后缀。`;
+5. 严格按 JSON 输出，不要任何前后缀。
+6. 如果 scene 是 unknown，overall_notes 必须说明为什么这不是室内房间照片。`;
 
 /** 生成唯一 ID */
 function generateId(): string {
@@ -112,6 +113,12 @@ export async function analyzeImage(
     console.log('[AI] Parsed:', JSON.stringify(raw).slice(0, 300));
   } catch (e) {
     throw new Error(`AI API 返回非法 JSON: ${content.slice(0, 200)}`);
+  }
+
+  // 场景校验：如果不是室内房间，提示用户重新拍照
+  const VALID_SCENES = ['bedroom', 'living_room', 'bathroom', 'desk_area', 'floor'];
+  if (!VALID_SCENES.includes(raw.scene)) {
+    throw new Error('NOT_ROOM');
   }
 
   // 后处理
