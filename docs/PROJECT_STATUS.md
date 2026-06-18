@@ -1,18 +1,31 @@
 # TidyZen 项目状态
 
-> 最后更新: 2026-06-17
+> 最后更新: 2026-06-18
 > Stitch 设计稿项目: `projects/12020854547316763944`（小徐的整理助手）
 
 ---
 
-## 一、设计稿 → 代码 精确映射
+## 一、项目概览
+
+| 指标 | 数值 |
+|---|---|
+| 页面文件 | 26 个 |
+| 组件 | 11 个 |
+| Store/Service | 5 个 |
+| 总代码行数 | ~8,700 行 |
+| 设计稿 | 44 张，100% 覆盖 |
+| Git commits | 20+ |
+
+---
+
+## 二、设计稿 → 代码 精确映射
 
 ### Tab 页面
 
 | 代码文件 | 路由 | 设计稿名称 | 设计稿 ID |
 |---|---|---|---|
 | `app/(tabs)/index.tsx` | `/(tabs)/index` | 首页 - 整洁助手 | `ca284524557a40e79220171599fcc11f` |
-| `app/(tabs)/scan.tsx` | `/(tabs)/scan` | （无独立设计稿，纯跳转逻辑） | — |
+| `app/(tabs)/scan.tsx` | `/(tabs)/scan` | 拍照扫描入口（双按钮版） | `10_拍照扫描分析` |
 | `app/(tabs)/history.tsx` | `/(tabs)/history` | 整理记录列表 - TidyZen (新版) | `f3fd2c6f83c44f06a213eea248dd70f2` |
 | `app/(tabs)/settings.tsx` | `/(tabs)/settings` | 设置 - TidyZen | `2ba523f848774f48ad89bc058bfaa6a5` |
 
@@ -46,126 +59,103 @@
 | `app/notification-preferences.tsx` | `/notification-preferences` | 通知偏好设置 (v2) | `44_通知偏好设置` |
 | `app/room-templates.tsx` | `/room-templates` | 房间模板管理 | `e0c84393752945698654ee40b07c9e34` |
 | `app/suggestion-preferences.tsx` | `/suggestion-preferences` | 建议库偏好 | `b5199e56d46f419e94ed689b09551153` |
+| `app/terms.tsx` | `/terms` | 服务条款 | `42_服务条款` |
+| `app/change-password.tsx` | `/change-password` | 修改密码 | `29_修改密码_TidyZen` |
+| `app/medals.tsx` | `/medals` | 我的勋章墙 | `34_我的勋章墙_TidyZen` |
+
+### 组件
+
+| 代码文件 | 说明 |
+|---|---|
+| `components/ScoreGauge.tsx` | 整洁度评分仪表盘（简化版） |
+| `components/BoundingBox.tsx` | AI 边界框标注 |
+| `components/SceneCard.tsx` | 场景选择卡片 |
+| `components/RecordCard.tsx` | 历史记录卡片（含缩略图） |
+| `components/ConfidenceBadge.tsx` | 置信度标识 |
+| `components/TipsModal.tsx` | 整理秘籍弹窗 (25_图文整理秘籍弹窗) |
+| `components/ui/Button.tsx` | 通用按钮 |
+| `components/ui/Card.tsx` | 通用卡片 |
+| `components/ui/EmptyState.tsx` | 空状态 |
+| `components/ui/SegmentedControl.tsx` | 分段控制器 |
+| `components/ui/Tag.tsx` | 标签 |
 
 ---
 
-## 二、各页面开发状态
+## 三、各页面开发状态
 
-| 页面 | 路由 | UI 完成度 | 数据流 | 备注 |
+| 页面 | 路由 | UI | 数据流 | 备注 |
 |---|---|---|---|---|
-| 首页 | `/(tabs)/index` | ✅ 完成 | ✅ 完成 | 从 history store 读取最新得分 |
-| 扫描 Tab | `/(tabs)/scan` | ✅ 完成 | ✅ 完成 | 纯跳转逻辑 |
-| 记录 Tab | `/(tabs)/history` | ✅ 完成 | ✅ 完成 | 从 store/storage 加载真实记录 |
-| 设置 Tab | `/(tabs)/settings` | ✅ 完成 | ⚠️ 部分 | 开关有本地状态，清除功能未接 |
-| 拍照 | `/camera` | ✅ 完成 | ✅ 完成 | 权限 + 拍照 + base64 |
-| 分析中 | `/analyzing` | ✅ 完成 | ⚠️ Mock | 1.5s 延时后调 mock AI |
-| 分析结果 | `/result` | ✅ 完成 | ✅ 完成 | 分析完自动保存到 storage + store |
-| 纠错/场景 | `/correction` | ✅ 完成 | ⚠️ Mock | 选场景后重调 mock AI |
-| 建议详情 | `/detail/[id]` | ✅ 完成 | ❌ Mock | `suggestion` 对象硬编码 |
-| 视频教程 | `/video/[id]` | ⚠️ 占位 | ❌ 无 | 只有播放图标，无视频 |
-| 记录详情 | `/record/[id]` | ✅ 完成 | ✅ 完成 | 从 store 按 id 查找 |
-| 整理足迹 | `/trends` | ✅ 完成 | ✅ 完成 | 从 store 计算趋势数据 |
-| 个人资料 | `/profile` | ✅ 完成 | ❌ Mock | 统计数据硬编码 |
-| 帮助中心 | `/help` | ✅ 完成 | ✅ 完成 | 纯静态 |
-| 关于 | `/about` | ✅ 完成 | ✅ 完成 | 纯静态 |
-| 隐私政策 | `/privacy` | ✅ 完成 | ✅ 完成 | 纯静态 |
-| 账号安全 | `/account` | ✅ 完成 | ❌ 无 | 所有按钮无功能 |
-| 通知偏好 | `/notification-preferences` | ✅ 完成 v2 | ⚠️ 本地状态 | 2026-06-17 CC 复刻 v2 设计稿 |
-| 房间模板 | `/room-templates` | ✅ 完成 | ❌ Mock | 按设计稿 27 实现 |
-| 建议偏好 | `/suggestion-preferences` | ✅ 完成 | ❌ Mock | 按设计稿 11 实现 |
+| 首页 | `/(tabs)/index` | ✅ | ✅ | 从 history store 读取最新得分+缩略图 |
+| 扫描 | `/(tabs)/scan` | ✅ | ✅ | 双入口：拍照扫描 + 从相册选择 |
+| 记录 | `/(tabs)/history` | ✅ | ✅ | 从 store/storage 加载真实记录 + TipsModal |
+| 设置 | `/(tabs)/settings` | ✅ | ⚠️ | 开关有本地状态，清除功能未接 |
+| 拍照 | `/camera` | ✅ | ✅ | 权限+拍照+相册选图+HEIC转JPEG |
+| 分析中 | `/analyzing` | ✅ | ✅ | 真实 AI API 调用 (mimo-v2.5) |
+| 分析结果 | `/result` | ✅ | ✅ | 分析完自动保存到 storage + store |
+| 纠错/场景 | `/correction` | ✅ | ⚠️ | 选场景后重调 AI |
+| 建议详情 | `/detail/[id]` | ✅ | ⚠️ | suggestion 对象从 store 读取 |
+| 视频教程 | `/video/[id]` | ⚠️ | ❌ | 只有播放图标，无视频资源 |
+| 记录详情 | `/record/[id]` | ✅ | ✅ | 从 store 按 id 查找 |
+| 整理足迹 | `/trends` | ✅ | ✅ | 从 store 计算趋势数据 |
+| 个人资料 | `/profile` | ✅ | ⚠️ | 统计数据硬编码 |
+| 帮助中心 | `/help` | ✅ | ✅ | 纯静态 |
+| 关于 | `/about` | ✅ | ✅ | 纯静态 |
+| 隐私政策 | `/privacy` | ✅ | ✅ | 纯静态 |
+| 账号安全 | `/account` | ✅ | ❌ | 所有按钮无功能 |
+| 通知偏好 | `/notification-preferences` | ✅ | ⚠️ | v2 复刻，本地状态 |
+| 房间模板 | `/room-templates` | ✅ | ❌ | 纯 UI |
+| 建议偏好 | `/suggestion-preferences` | ✅ | ❌ | 纯 UI |
+| 服务条款 | `/terms` | ✅ | ✅ | 纯静态 |
+| 修改密码 | `/change-password` | ✅ | ❌ | 表单无提交功能 |
+| 勋章墙 | `/medals` | ✅ | ❌ | 纯 UI，9 个勋章 |
 
 ---
 
-## 三、服务层状态
+## 四、服务层状态
 
 | 模块 | 文件 | 状态 | 说明 |
 |---|---|---|---|
-| AI 分析 | `services/ai.ts` | ⚠️ Mock | API 调用代码已写好但注释，使用硬编码 mock |
-| 建议匹配 | `services/suggestions.ts` | ✅ 完成 | 10场景 × 20条建议，按优先级匹配 |
-| 本地存储 | `services/storage.ts` | ✅ 完成 | 已接入 result/history/index/record/trends |
+| AI 分析 | `services/ai.ts` | ✅ 真实 | 对接 mimo-v2.5 视觉模型，含场景校验+markdown strip |
+| 建议匹配 | `services/suggestions.ts` | ✅ 完成 | 10 场景 × 20 条建议，按优先级匹配 |
+| 本地存储 | `services/storage.ts` | ✅ 完成 | AsyncStorage CRUD，已接入 5 个页面 |
 | 分析 Store | `stores/analysis.ts` | ✅ 完成 | Zustand，流程状态管理 |
 | 历史 Store | `stores/history.ts` | ✅ 完成 | Zustand，已通过 result.tsx 接入 storage |
 
 ---
 
-## 四、设计稿复刻进度
+## 五、开发路线图
 
-**设计稿总数**: 44 张  |  **已映射**: 42 张  |  **页面文件**: 23 个
+### P0 — 补齐缺失页面 ✅ 完成 (2026-06-17)
 
-### ✅ 已复刻完成（20 个页面）
+- [x] 服务条款 — app/terms.tsx (ad795b5)
+- [x] 修改密码 — app/change-password.tsx (ad795b5)
+- [x] 整理秘籍弹窗 — components/TipsModal.tsx (ad795b5)
+- [x] 勋章墙 — app/medals.tsx (ad795b5)
+- [x] 通知偏好 v2 — app/notification-preferences.tsx (3ccfcce)
 
-| 页面 | 代码文件 | 对应设计稿 |
-|---|---|---|
-| 首页 | `app/(tabs)/index.tsx` | 38_首页_整洁助手 |
-| 扫描 | `app/(tabs)/scan.tsx` | 无独立设计稿 |
-| 记录 | `app/(tabs)/history.tsx` | 05/06/19/21/32/33 (6个变体，采用新版) |
-| 设置 | `app/(tabs)/settings.tsx` | 12_设置_TidyZen |
-| 拍照 | `app/camera.tsx` | 10/28/37/39 (v1-v3，采用v3) |
-| 分析中 | `app/analyzing.tsx` | 14/24 (过渡页 vs 简洁版，采用简洁版) |
-| 分析结果 | `app/result.tsx` | 09/20/35 (含置信度版) |
-| 纠错/场景 | `app/correction.tsx` | 01/23/31 (纠错版) |
-| 建议详情 | `app/detail/[id].tsx` | 02/13/17/36/40 (图文指引版) |
-| 视频教程 | `app/video/[id].tsx` | 07_视频教程播放界面 |
-| 记录详情 | `app/record/[id].tsx` | 22/43 (整理记录详情) |
-| 整理足迹 | `app/trends.tsx` | 26_整理足迹与趋势分析 |
-| 个人资料 | `app/profile.tsx` | 15_个人资料_TidyZen |
-| 帮助中心 | `app/help.tsx` | 03_常见问题_帮助中心 |
-| 关于 | `app/about.tsx` | 18_关于_TidyZen |
-| 隐私政策 | `app/privacy.tsx` | 08/41 (隐私政策与服务协议) |
-| 账号安全 | `app/account.tsx` | 16_账号管理与安全 |
-| 通知偏好 | `app/notification-preferences.tsx` | 44_通知偏好设置 (v2, 2026-06-17) |
-| 房间模板 | `app/room-templates.tsx` | 27_房间模板管理 |
-| 建议偏好 | `app/suggestion-preferences.tsx` | 11_建议库偏好 |
+### P1 — 打通数据流 ✅ 完成 (2026-06-17)
 
-### ❌ 未实现（4 个设计稿页面）
+- [x] result → storage → history store 串联 (448e589)
+- [x] 首页接入真实评分 + 缩略图 (448e589, 3ccfcce)
+- [x] record/[id] + trends 接入 store (448e589)
 
-| 设计稿 | 说明 | 优先级 |
-|---|---|---|
-| 29_修改密码_TidyZen | 独立页面 | 🟢 增强 |
-| 34_我的勋章墙_TidyZen | 全新页面，成就/勋章系统 | 🟢 增强 |
-| 42_服务条款 | 独立页面（privacy.tsx 只覆盖隐私政策） | 🟢 增强 |
-| 25_图文整理秘籍弹窗 | 弹窗组件，可嵌入 history.tsx | 🟢 增强 |
+### P2 — AI 对接 🔄 进行中
 
----
-
-## 五、开发路线图（2026-06-18 更新）
-
-### P0 — 补齐缺失页面（设计稿 100% 覆盖）✅ 完成
-> 纯 UI，无后端依赖，CC 半天搞定
-
-- [x] **服务条款页面** — app/terms.tsx, 318 行 (ad795b5)
-- [x] **修改密码页面** — app/change-password.tsx, 210 行 (ad795b5)
-- [x] **整理秘籍弹窗** — components/TipsModal.tsx, 317 行 (ad795b5)
-- [x] **勋章墙** — app/medals.tsx, 514 行 (ad795b5)
-
-### P1 — 打通数据流（从"能看"到"能用"）✅ 完成
-> 让拍照结果能持久化，App 算真正可用
-
-- [x] **result.tsx → storage → history store 串联** — 分析完成后自动保存到 AsyncStorage + 更新 store (448e589)
-- [x] **首页接入真实评分** — latestScore = records[0]?.score ?? 85 (448e589)
-- [x] **record/[id] + trends 接入 store** — 从 useHistoryStore 读取，不再硬编码 (448e589)
-
-### P2 — 核心能力对齐（AI 对接）🔄 进行中
-> mimo-v2.5 API 已对接，待端到端验证
-
-- [x] **services/ai.ts 对接真实 AI API** — mimo-v2.5 (cd16b03)
-- [x] **HEIC→JPEG 转码** — expo-image-manipulator (5e3e5e5)
-- [x] **markdown 代码块 strip** — mimo 返回 ```json 包裹 (69cab31)
-- [x] **场景校验** — 非房间照片提示重新拍照 (a8c89bb)
-- [ ] **端到端验证** — 相册选图→AI分析→结果展示 全链路通过
-- [ ] **视频教程内容** — 接入真实视频资源或拍摄 15s 教程
+- [x] mimo-v2.5 API 对接 (cd16b03)
+- [x] HEIC→JPEG 转码 — expo-image-manipulator (5e3e5e5)
+- [x] markdown 代码块 strip (69cab31)
+- [x] 场景校验 — 非房间照片拦截 (a8c89bb)
+- [x] scan.tsx 双入口 — 拍照+相册 (281d906)
+- [x] 相机返回导航修正 (1d2357a)
+- [ ] **端到端验证** — 相册选图 → AI 分析 → 结果展示
+- [ ] **视频教程内容** — 接入真实视频资源
 
 ### P3 — 上架准备
+
 - [ ] App Store 图标 / 启动屏 / 截图
-- [ ] ScoreGauge 真实 SVG 进度环（当前为简化版）
+- [ ] ScoreGauge 真实 SVG 进度环
+- [ ] Tab 导航对齐设计稿（4 入口）
 - [ ] 各页面细节打磨
-- [ ] Expo Router Tab 导航对齐设计稿（4入口：首页/整理/通知/我的）
-
-### ✅ 已完成增强
-
-- [x] 建议库偏好页面（设计稿 `11_建议库偏好`）— 2026-06-16 实现
-- [x] 房间模板管理（设计稿 `27_房间模板管理`）— 2026-06-16 实现
-- [x] 通知偏好页面 v2（设计稿 `44_通知偏好设置`）— 2026-06-17 CC 复刻
 
 ---
 
@@ -178,19 +168,41 @@
 | `dd0b5f8` | fix: camera fullScreenModal 导航 |
 | `2734a90` | fix: 去掉 fullScreenModal，用普通 stack 导航 |
 | `076df7f` | fix: scan tab 用 router.push 替代 Redirect |
+| `ad795b5` | feat: P0 完成 — 补齐 4 个缺失设计稿页面 |
+| `1d2357a` | fix: 相机返回直接回首页 |
+| `281d906` | fix: 扫描流程全链路打通 |
+| `32d3bc8` | fix: 移除 allowsEditing 修复相册选图卡死 |
+| `448e589` | feat: P1 完成 — 打通数据流 |
+| `3ccfcce` | feat: 历史记录和首页显示缩略图 |
+| `cd16b03` | feat: P2 对接真实 AI API — mimo-v2.5 |
+| `e446442` | fix: AI API 模型名修正 + 移除 response_format |
+| `a8c89bb` | fix: AI 分析增加场景校验 |
+| `e90c83f` | fix: AI 模型改为 mimo-v2-omni + reasoning fallback |
+| `69cab31` | fix: AI 响应去掉 markdown 代码块 |
+| `8654b77` | fix: 相册图片 HEIC→JPEG 转码 |
+| `5e3e5e5` | fix: 恢复 expo-image-manipulator，修复 Ruby 2.6 pod |
+| `66e6c81` | docs: 更新开发路线图 |
 
 ---
 
-## 七、设计稿迭代版本（参考）
+## 七、环境配置
 
-这些是 Stitch 中的历史版本，已废弃但保留参考：
+| 项目 | 值 |
+|---|---|
+| AI API | mimo-v2.5 (小米视觉语言模型) |
+| API URL | `https://token-plan-cn.xiaomimimo.com/v1/chat/completions` |
+| API Key | `.env` 文件 (EXPO_PUBLIC_AI_API_KEY) |
+| Bundle ID | `com.anonymous.tidy-zen` |
+| iOS 模拟器 | iPhone 17 Pro (EC2A677A-33E9-4EF7-92AB-12438A662697) |
+| Ruby (CocoaPods) | brew Ruby 4.0.5 (系统 Ruby 2.6 不兼容 filter_map) |
 
-| 页面 | 当前采用 | 废弃版本 |
-|---|---|---|
-| 拍照 | v3 (`1a02ba19`) | v2 (`5b7efe35`)、v1 (`f932ac2c`)、无引导版 (`2082189d`) |
-| 分析中 | 简洁加载版 (`baa4e173`) | 过渡页 (`f3a4005f`) |
-| 分析结果 | 含置信度版 (`23ede24a`) | 旧版 (`47545b7e`)、深度版 (`23c06919`/`a8ccfbce`) |
-| 场景选择 | 纠错版 (`2ad02696`) | 旧版 × 2 (`430a9abb`/`44d83b4e`) |
-| 记录列表 | 新版 (`f3fd2c6f`) | 旧版 × 5 |
-| 建议详情 | 图文版 (`a00a8045`) | 含视频版 (`d70ff7e5`)、放大版 × 2 |
-| 通知偏好 | v2 (`44_通知偏好设置`) | v1 (旧版 Switch 样式 + 3入口导航) |
+---
+
+## 八、已知问题
+
+1. **相册 HEIC→JPEG** — expo-image-manipulator 刚重构建好，待端到端验证
+2. **视频教程** — 只有占位 UI，无实际视频资源
+3. **设置页清除功能** — 开关有状态但清除记录等按钮无功能
+4. **账号安全页** — 所有按钮无功能
+5. **修改密码** — 表单无提交功能
+6. **ScoreGauge** — 简化版，非真实 SVG 进度环
