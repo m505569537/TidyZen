@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useRef, useState } from 'react';
 import { colors, typography, spacing, radius } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
@@ -12,18 +12,18 @@ import { BoundingBox } from '../components';
 
 /**
  * Re-encode any image (HEIC/PNG/JPEG/…) to JPEG and return a fresh base64.
- * The AI API only accepts bmp/gif/png/jpeg/webp — iOS HEIC photos must be
- * transcoded, not just relabeled. `quality: 0.8` on the picker/camera does
- * not reliably force JPEG on iOS 17+, so we run everything through the
- * manipulator unconditionally.
+ * Uses the stable manipulateAsync API (deprecated but reliable).
  */
 async function toJpegBase64(uri: string): Promise<{ uri: string; base64: string }> {
-  const ctx = ImageManipulator.manipulate(uri);
-  const rendered = await ctx.renderAsync();
-  const result = await rendered.saveAsync({ format: SaveFormat.JPEG, base64: true, compress: 0.8 });
+  const result = await ImageManipulator.manipulateAsync(
+    uri,
+    [],  // no transformations, just re-encode
+    { format: SaveFormat.JPEG, compress: 0.8, base64: true }
+  );
   if (!result.base64) {
     throw new Error('图片转码失败：未返回 base64');
   }
+  console.log('[camera] toJpegBase64: uri=', result.uri, 'base64 length=', result.base64.length);
   return { uri: result.uri, base64: result.base64 };
 }
 
