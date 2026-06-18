@@ -128,7 +128,7 @@
 
 ---
 
-## 五、开发路线图（2026-06-17 更新）
+## 五、开发路线图（2026-06-18 更新）
 
 ### P0 — 补齐缺失页面（设计稿 100% 覆盖）✅ 完成
 > 纯 UI，无后端依赖，CC 半天搞定
@@ -145,16 +145,21 @@
 - [x] **首页接入真实评分** — latestScore = records[0]?.score ?? 85 (448e589)
 - [x] **record/[id] + trends 接入 store** — 从 useHistoryStore 读取，不再硬编码 (448e589)
 
-### P2 — 核心能力对齐（AI 对接）
-> 依赖后端服务就绪
+### P2 — 核心能力对齐（AI 对接）🔄 进行中
+> mimo-v2.5 API 已对接，待端到端验证
 
-- [ ] **services/ai.ts 对接真实 AI API** — 配置 `EXPO_PUBLIC_AI_API_URL` / `EXPO_PUBLIC_AI_API_KEY`
+- [x] **services/ai.ts 对接真实 AI API** — mimo-v2.5 (cd16b03)
+- [x] **HEIC→JPEG 转码** — expo-image-manipulator (5e3e5e5)
+- [x] **markdown 代码块 strip** — mimo 返回 ```json 包裹 (69cab31)
+- [x] **场景校验** — 非房间照片提示重新拍照 (a8c89bb)
+- [ ] **端到端验证** — 相册选图→AI分析→结果展示 全链路通过
 - [ ] **视频教程内容** — 接入真实视频资源或拍摄 15s 教程
 
 ### P3 — 上架准备
 - [ ] App Store 图标 / 启动屏 / 截图
 - [ ] ScoreGauge 真实 SVG 进度环（当前为简化版）
 - [ ] 各页面细节打磨
+- [ ] Expo Router Tab 导航对齐设计稿（4入口：首页/整理/通知/我的）
 
 ### ✅ 已完成增强
 
