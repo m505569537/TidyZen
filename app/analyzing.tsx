@@ -54,15 +54,25 @@ export default function AnalyzingScreen() {
 
     const runAnalysis = async () => {
       try {
+        console.log('[Analyzing] photoBase64 length:', photoBase64?.length ?? 0);
         const result = await analyzeImage(photoBase64);
         result.photoUri = useAnalysisStore.getState().photoUri ?? '';
         setResult(result);
         router.replace('/result');
       } catch (e: any) {
+        // 详细错误日志：打印完整错误对象，便于诊断
+        console.error('[Analyzing] AI analysis failed:', e);
+        console.error('[Analyzing] error.message:', e?.message);
+        console.error('[Analyzing] error.name:', e?.name);
+        console.error('[Analyzing] error.stack:', e?.stack);
+
         const isNotRoom = e?.message === 'NOT_ROOM';
+        const errorMessage = e?.message ?? String(e) ?? '未知错误';
         Alert.alert(
           isNotRoom ? '无法识别房间' : '分析失败',
-          isNotRoom ? '这张照片似乎不是室内房间场景，请重新拍摄一张房间照片。' : 'AI 分析未能完成，请稍后重试。',
+          isNotRoom
+            ? '这张照片似乎不是室内房间场景，请重新拍摄一张房间照片。'
+            : `AI 分析未能完成。\n\n错误详情：${errorMessage}`,
           [{ text: '好的', onPress: () => router.replace('/(tabs)/scan') }],
         );
       }

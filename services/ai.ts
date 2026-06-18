@@ -69,38 +69,59 @@ export async function analyzeImage(
     throw new Error('AI API 未配置：请检查 EXPO_PUBLIC_AI_API_URL 和 EXPO_PUBLIC_AI_API_KEY');
   }
 
-  const response = await fetch(API_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'mimo-v2.5',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image_url',
-              image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
-            },
-            {
-              type: 'text',
-              text: BUILD_ANALYSIS_PROMPT,
-            },
-          ],
-        },
-      ],
-    }),
-  });
+  console.log('[AI] Endpoint:', API_ENDPOINT);
+  console.log('[AI] Key prefix:', API_KEY.slice(0, 8) + '...');
+  console.log('[AI] base64 length:', imageBase64.length, '(~', Math.round(imageBase64.length * 0.75 / 1024), 'KB)');
+
+  let response: Response;
+  try {
+    response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'mimo-v2.5',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+              },
+              {
+                type: 'text',
+                text: BUILD_ANALYSIS_PROMPT,
+              },
+            ],
+          },
+        ],
+      }),
+    });
+  } catch (fetchErr: any) {
+    // 网络层错误：超时、DNS 失败、SSL 等
+    console.error('[AI] fetch threw:', fetchErr);
+    throw new Error(`网络请求失败: ${fetchErr?.message ?? String(fetchErr)}`);
+  }
+
+  console.log('[AI] response status:', response.status, response.statusText);
 
   if (!response.ok) {
     const errText = await response.text().catch(() => '');
-    throw new Error(`AI API error: ${response.status} ${errText}`);
+    console.error('[AI] non-OK response body:', errText.slice(0, 500));
+    throw new Error(`AI API error: ${response.status} ${errText.slice(0, 200)}`);
   }
 
-  const data = await response.json();
+  let data: any;
+  try {
+    data = await response.json();
+  } catch (jsonErr: any) {
+    console.error('[AI] response.json() failed:', jsonErr);
+    throw new Error(`API 响应不是有效 JSON: ${jsonErr?.message ?? String(jsonErr)}`);
+  }
+  console.log('[AI] response keys:', Object.keys(data ?? {}));
   const content: string = data?.choices?.[0]?.message?.content ?? '';
   if (!content) {
     throw new Error('AI API 返回内容为空');
