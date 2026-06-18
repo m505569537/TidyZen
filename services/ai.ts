@@ -99,7 +99,7 @@ export async function analyzeImage(
         // 必须用 mimo-v2-omni（多模态/视觉模型）。
         // mimo-v2.5 / mimo-v2.5-pro 是纯文本模型，传图片会返回
         // 404 "No endpoints found that support image input"。
-        model: 'mimo-v2-omni',
+        model: 'mimo-v2.5',
         messages: [
           {
             role: 'user',
