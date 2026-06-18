@@ -4,47 +4,40 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
-import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useRef, useState } from 'react';
 import { colors, typography, spacing, radius } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
 import { BoundingBox } from '../components';
 
 /**
- * Re-encode any image (HEIC/PNG/JPEG/…) to JPEG and return a fresh base64.
- * Step 1: Use manipulateAsync to convert to JPEG file
- * Step 2: Use FileSystem to read the JPEG file as base64 (more reliable)
+ * Convert image to JPEG base64.
+ * Tries expo-image-manipulator first, falls back to raw base64 from ImagePicker.
  */
-async function toJpegBase64(uri: string): Promise<{ uri: string; base64: string }> {
+async function toJpegBase64(uri: string, fallbackBase64?: string): Promise<{ uri: string; base64: string }> {
   console.log('[camera] toJpegBase64: input uri=', uri);
 
-  // Step 1: Convert to JPEG file
-  const result = await manipulateAsync(uri, [], {
-    format: SaveFormat.JPEG,
-    compress: 0.8,
-  });
-  console.log('[camera] toJpegBase64: converted uri=', result.uri);
-
-  // Step 2: Read the JPEG file as base64 using FileSystem
-  const base64 = await FileSystem.readAsStringAsync(result.uri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-
-  if (!base64) {
-    throw new Error('图片转码失败：无法读取 base64');
+  try {
+    // Try using ImageManipulator to convert to JPEG
+    const ctx = ImageManipulator.manipulate(uri);
+    const rendered = await ctx.renderAsync();
+    const result = await rendered.saveAsync({ format: 'jpeg', compress: 0.8, base64: true });
+    if (result.base64) {
+      const prefix = result.base64.slice(0, 6);
+      console.log('[camera] toJpegBase64: manipulator OK, prefix=', prefix, 'length=', result.base64.length);
+      return { uri: result.uri, base64: result.base64 };
+    }
+  } catch (e) {
+    console.warn('[camera] toJpegBase64: manipulator failed:', e);
   }
 
-  // Verify JPEG signature (FF D8 FF = /9j/ in base64)
-  const prefix = base64.slice(0, 6);
-  const isJpeg = prefix.startsWith('/9j/');
-  console.log('[camera] toJpegBase64: base64 prefix=', prefix, 'isJpeg=', isJpeg, 'length=', base64.length);
-
-  if (!isJpeg) {
-    console.warn('[camera] WARNING: output is NOT JPEG! Prefix:', prefix);
+  // Fallback: use the raw base64 from ImagePicker (may be HEIC on iOS)
+  if (fallbackBase64) {
+    console.log('[camera] toJpegBase64: using fallback base64, length=', fallbackBase64.length);
+    return { uri, base64: fallbackBase64 };
   }
 
-  return { uri: result.uri, base64 };
+  throw new Error('图片转码失败：无法获取 base64');
 }
 
 export default function CameraScreen() {
@@ -122,6 +115,7 @@ export default function CameraScreen() {
       const res = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         quality: 0.8,
+        base64: true,
       });
 
       if (res.canceled) return;
@@ -130,7 +124,8 @@ export default function CameraScreen() {
         Alert.alert('选择失败', '无法读取所选图片，请重试。');
         return;
       }
-      const { uri, base64 } = await toJpegBase64(asset.uri);
+      // Try manipulator conversion, fall back to raw base64 from ImagePicker
+      const { uri, base64 } = await toJpegBase64(asset.uri, asset.base64);
       setPhoto(uri, base64);
       router.push('/analyzing');
     } catch (e: any) {
