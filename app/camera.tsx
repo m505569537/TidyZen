@@ -11,17 +11,22 @@ import { useAnalysisStore } from '../stores/analysis';
 import { BoundingBox } from '../components';
 
 /**
- * Get image as base64 for API analysis.
- * Uses the base64 directly from ImagePicker.
- * Note: On iOS, photos may be HEIC format. The API supports jpeg/png/webp.
- * If the API rejects the format, the error message will guide the user.
+ * Convert any image to JPEG base64 using expo-image-manipulator.
+ * Handles HEIC/PNG/etc -> JPEG conversion for API compatibility.
  */
-async function getImageBase64(uri: string, pickerBase64?: string): Promise<{ uri: string; base64: string }> {
-  if (pickerBase64) {
-    console.log('[camera] getImageBase64: using picker base64, length=', pickerBase64.length, 'prefix=', pickerBase64.slice(0, 6));
-    return { uri, base64: pickerBase64 };
+async function toJpegBase64(uri: string): Promise<{ uri: string; base64: string }> {
+  console.log('[camera] toJpegBase64: input uri=', uri);
+  const result = await manipulateAsync(uri, [], {
+    format: SaveFormat.JPEG,
+    compress: 0.8,
+    base64: true,
+  });
+  if (!result.base64) {
+    throw new Error('图片转码失败：未返回 base64');
   }
-  throw new Error('无法获取图片 base64');
+  const prefix = result.base64.slice(0, 6);
+  console.log('[camera] toJpegBase64: OK, prefix=', prefix, 'length=', result.base64.length);
+  return { uri: result.uri, base64: result.base64 };
 }
 
 export default function CameraScreen() {
@@ -107,7 +112,7 @@ export default function CameraScreen() {
         return;
       }
       // Try manipulator conversion, fall back to raw base64 from ImagePicker
-      const { uri, base64 } = await getImageBase64(asset.uri, asset.base64);
+      const { uri, base64 } = await toJpegBase64(asset.uri);
       setPhoto(uri, base64);
       router.push('/analyzing');
     } catch (e: any) {
