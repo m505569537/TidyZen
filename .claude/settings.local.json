@@ -1,11 +1,13 @@
 {
-  "enabledMcpjsonServers": [
-    "stitch"
-  ],
   "permissions": {
     "allow": [
       "Bash(git add *)",
-      "Bash(git commit -m 'fix: prevent ForwardRef error when navigating back from camera *)"
+      "Bash(git commit -m 'fix: prevent ForwardRef error when navigating back from camera *)",
+      "Read(//private/tmp/**)",
+      "Bash(cp /Users/eeexu/web/ll/proving-ground/TidyZen/docs/designs/38_首页_整洁助手.png test_room.png)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "stitch"
+  ]
 }

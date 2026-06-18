@@ -8,6 +8,20 @@ import { matchSuggestions } from './suggestions';
 const API_ENDPOINT = process.env.EXPO_PUBLIC_AI_API_URL ?? '';
 const API_KEY = process.env.EXPO_PUBLIC_AI_API_KEY ?? '';
 
+// 启动时打一次配置状态日志，方便排查 .env 是否被 Expo SDK 56 正确注入。
+// EXPO_PUBLIC_* 变量在打包/启动 Metro 时被内联到 JS bundle 中——
+// 修改 .env 后需要重启 dev server（带 --clear），否则旧值会留在缓存里。
+if (!API_ENDPOINT || !API_KEY) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    '[AI] 配置缺失: EXPO_PUBLIC_AI_API_URL / EXPO_PUBLIC_AI_API_KEY 未注入。',
+    '请确认项目根目录有 .env 文件，并使用 `npx expo start --clear` 重启。'
+  );
+} else {
+  // eslint-disable-next-line no-console
+  console.log('[AI] 配置已加载, endpoint=', API_ENDPOINT, 'key prefix=', API_KEY.slice(0, 6));
+}
+
 /** 视觉分析提示词：要求模型严格返回 JSON */
 const BUILD_ANALYSIS_PROMPT = `你是一个专业的室内整洁度分析师。请仔细观察这张室内照片，识别画面中所有可见的杂物，并以严格 JSON 格式返回分析结果。
 
@@ -82,7 +96,10 @@ export async function analyzeImage(
         Authorization: `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'mimo-v2.5',
+        // 必须用 mimo-v2-omni（多模态/视觉模型）。
+        // mimo-v2.5 / mimo-v2.5-pro 是纯文本模型，传图片会返回
+        // 404 "No endpoints found that support image input"。
+        model: 'mimo-v2-omni',
         messages: [
           {
             role: 'user',
@@ -122,9 +139,26 @@ export async function analyzeImage(
     throw new Error(`API 响应不是有效 JSON: ${jsonErr?.message ?? String(jsonErr)}`);
   }
   console.log('[AI] response keys:', Object.keys(data ?? {}));
-  const content: string = data?.choices?.[0]?.message?.content ?? '';
+  // mimo-v2-omni 是推理模型：正常情况下 message.content 包含 JSON 答案，
+  // reasoning_content 包含思考链。但极少数情况下模型可能把答案错放在
+  // reasoning_content 里 —— 因此 content 为空时降级使用 reasoning_content。
+  const message = data?.choices?.[0]?.message ?? {};
+  const rawContent: string = (message.content ?? '').trim();
+  const reasoningContent: string = (message.reasoning_content ?? '').trim();
+  let content = rawContent;
+  if (!content && reasoningContent) {
+    console.warn('[AI] content 为空，降级使用 reasoning_content');
+    content = reasoningContent;
+  }
   if (!content) {
-    throw new Error('AI API 返回内容为空');
+    console.error('[AI] message keys:', Object.keys(message));
+    throw new Error('AI API 返回内容为空（content 与 reasoning_content 均无内容）');
+  }
+
+  // reasoning_content 里有时会夹带思考过程文字，需要从中抽取出第一个 JSON 对象。
+  if (content !== rawContent || !content.startsWith('{')) {
+    const match = content.match(/\{[\s\S]*\}/);
+    if (match) content = match[0];
   }
 
   let raw: AnalysisRawResponse;
