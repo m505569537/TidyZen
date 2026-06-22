@@ -34,6 +34,11 @@ export async function clearHistory(): Promise<void> {
   await AsyncStorage.removeItem(HISTORY_KEY);
 }
 
+/** 清除所有本地数据（历史 + 设置），用于退出登录 */
+export async function clearAllData(): Promise<void> {
+  await AsyncStorage.multiRemove([HISTORY_KEY, SETTINGS_KEY]);
+}
+
 /** 保存设置 */
 export async function saveSetting(key: string, value: string): Promise<void> {
   const settings = await getSettings();

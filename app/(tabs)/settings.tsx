@@ -1,9 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { clearHistory, clearAllData, getHistoryRecords } from '../../services/storage';
 
 interface SettingItemProps {
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -33,6 +34,60 @@ function SettingItem({ icon, label, subtitle, right, onPress, iconBg, iconColor,
 
 export default function SettingsScreen() {
   const [notify, setNotify] = useState(true);
+  const [recordCount, setRecordCount] = useState(0);
+
+  const loadCount = useCallback(async () => {
+    const records = await getHistoryRecords();
+    setRecordCount(records.length);
+  }, []);
+
+  useFocusEffect(useCallback(() => {
+    loadCount();
+  }, [loadCount]));
+
+  const handleClearCache = () => {
+    if (recordCount === 0) {
+      Alert.alert('提示', '当前没有可清除的缓存');
+      return;
+    }
+    Alert.alert(
+      '清除本地照片缓存',
+      `确定要清除 ${recordCount} 条整理记录吗？此操作不可恢复。`,
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '确认清除',
+          style: 'destructive',
+          onPress: async () => {
+            await clearHistory();
+            setRecordCount(0);
+            Alert.alert('已清除', '本地照片缓存已清除');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      '退出登录',
+      '退出后将清除本地所有数据，确定要退出吗？',
+      [
+        { text: '取消', style: 'cancel' },
+        {
+          text: '确认退出',
+          style: 'destructive',
+          onPress: async () => {
+            await clearAllData();
+            setRecordCount(0);
+            Alert.alert('已退出', '本地数据已全部清除');
+          },
+        },
+      ]
+    );
+  };
+
+  const cacheLabel = recordCount > 0 ? `${recordCount} 条记录` : '已清除';
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -78,7 +133,8 @@ export default function SettingsScreen() {
             right={<Switch value={notify} onValueChange={setNotify} />}
           />
           <SettingItem icon="delete-sweep" label="清除本地照片缓存" subtitle="已开启隐私保护" showArrow={false}
-            right={<Text style={styles.cacheSize}>124 MB</Text>}
+            onPress={handleClearCache}
+            right={<Text style={styles.cacheSize}>{cacheLabel}</Text>}
           />
           <SettingItem icon="shield" label="隐私政策" onPress={() => router.push('/privacy')} />
         </View>
@@ -92,7 +148,7 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.7} onPress={handleLogout}>
           <Text style={styles.logoutText}>退出登录</Text>
         </TouchableOpacity>
       </ScrollView>
