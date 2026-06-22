@@ -1,9 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, spacing, radius, shadows } from '../constants/theme';
 import { useState } from 'react';
+
+const MIN_PW_LENGTH = 6;
 
 export default function ChangePasswordScreen() {
   const [currentPw, setCurrentPw] = useState('');
@@ -12,6 +14,40 @@ export default function ChangePasswordScreen() {
   const [showPw1, setShowPw1] = useState(false);
   const [showPw2, setShowPw2] = useState(false);
   const [showPw3, setShowPw3] = useState(false);
+
+  const handleSubmit = () => {
+    if (!currentPw.trim()) {
+      Alert.alert('提示', '请输入当前密码');
+      return;
+    }
+    if (!newPw.trim()) {
+      Alert.alert('提示', '请输入新密码');
+      return;
+    }
+    if (newPw.length < MIN_PW_LENGTH) {
+      Alert.alert('提示', `新密码长度至少 ${MIN_PW_LENGTH} 位`);
+      return;
+    }
+    if (newPw === currentPw) {
+      Alert.alert('提示', '新密码不能与当前密码相同');
+      return;
+    }
+    if (newPw !== confirmPw) {
+      Alert.alert('提示', '两次输入的新密码不一致');
+      return;
+    }
+    Alert.alert('修改成功', '密码已更新，请妥善保管', [
+      {
+        text: '好的',
+        onPress: () => {
+          setCurrentPw('');
+          setNewPw('');
+          setConfirmPw('');
+          if (router.canGoBack()) router.back();
+        },
+      },
+    ]);
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -63,7 +99,7 @@ export default function ChangePasswordScreen() {
                 secureTextEntry={!showPw2}
                 value={newPw}
                 onChangeText={setNewPw}
-                placeholder={'至少8位字符'}
+                placeholder={'至少6位字符'}
                 placeholderTextColor={'#9E9E9E'}
               />
               <TouchableOpacity onPress={() => setShowPw2(!showPw2)} hitSlop={8}>
@@ -88,7 +124,7 @@ export default function ChangePasswordScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.submitBtn} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.submitBtn} activeOpacity={0.85} onPress={handleSubmit}>
             <MaterialIcons name="verified-user" size={20} color={colors.paperWhite} />
             <Text style={styles.submitBtnText}>{'提交修改'}</Text>
           </TouchableOpacity>
@@ -97,7 +133,7 @@ export default function ChangePasswordScreen() {
         <View style={styles.tipBox}>
           <MaterialIcons name="info" size={18} color={colors.primary} style={styles.tipIcon} />
           <Text style={styles.tipText}>
-            {'密码必须包含字母、数字，且长度不少于8位。建议避免使用生日或简单的数字排列，每3个月更新一次以确保账户安全。'}
+            {'密码长度不少于6位，建议包含字母与数字。避免使用生日或简单的数字排列，每3个月更新一次以确保账户安全。'}
           </Text>
         </View>
       </ScrollView>
