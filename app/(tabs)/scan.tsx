@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActionSheetIOS, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { useAnalysisStore } from '../../stores/analysis';
 export default function ScanTab() {
   const setPhoto = useAnalysisStore((s) => s.setPhoto);
   const reset = useAnalysisStore((s) => s.reset);
+  const setSelectedScene = useAnalysisStore((s) => s.setSelectedScene);
 
   // 每次进入 scan tab 时清空旧的分析状态，保证新的扫描从空白开始
   useFocusEffect(
@@ -46,6 +47,69 @@ export default function ScanTab() {
       }
     } catch {
       Alert.alert('选择失败', '打开相册时出错，请重试。');
+    }
+  };
+
+  // 「精准扫描」：让用户先选择房间场景，再进入相机。
+  // 选择的场景会写入 store.selectedScene，随后在 analyzing 阶段拼到 AI 提示词里，
+  // 帮助模型聚焦该场景常见的杂物类型。
+  const SCENE_OPTIONS: { label: string; id: string | null }[] = [
+    { label: '卧室', id: 'bedroom' },
+    { label: '客厅', id: 'living_room' },
+    { label: '书房', id: 'desk_area' },
+    { label: '浴室', id: 'bathroom' },
+    { label: '其他', id: null },
+  ];
+
+  const proceedWithScene = (sceneId: string | null) => {
+    // null 代表「其他 / 不指定」—— AI 自动判断，等价于普通拍照流程
+    setSelectedScene(sceneId);
+    router.push('/camera');
+  };
+
+  const handlePreciseScan = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: '选择场景',
+          message: '告诉 AI 你正在扫描什么房间，识别会更精准',
+          options: [...SCENE_OPTIONS.map((o) => o.label), '取消'],
+          cancelButtonIndex: SCENE_OPTIONS.length,
+        },
+        (idx) => {
+          if (idx === SCENE_OPTIONS.length) return; // 取消
+          const picked = SCENE_OPTIONS[idx];
+          if (picked) proceedWithScene(picked.id);
+        },
+      );
+    } else {
+      // Android: Alert.alert 最多支持 3 个按钮，所以拆成两层菜单。
+      // 第一层只列前 3 项 + 「更多」；第二层列剩余项。
+      Alert.alert(
+        '选择场景',
+        '告诉 AI 你正在扫描什么房间，识别会更精准',
+        [
+          { text: SCENE_OPTIONS[0].label, onPress: () => proceedWithScene(SCENE_OPTIONS[0].id) },
+          { text: SCENE_OPTIONS[1].label, onPress: () => proceedWithScene(SCENE_OPTIONS[1].id) },
+          {
+            text: '更多…',
+            onPress: () => {
+              Alert.alert(
+                '选择场景',
+                undefined,
+                [
+                  { text: SCENE_OPTIONS[2].label, onPress: () => proceedWithScene(SCENE_OPTIONS[2].id) },
+                  { text: SCENE_OPTIONS[3].label, onPress: () => proceedWithScene(SCENE_OPTIONS[3].id) },
+                  { text: SCENE_OPTIONS[4].label, onPress: () => proceedWithScene(SCENE_OPTIONS[4].id) },
+                  { text: '取消', style: 'cancel' },
+                ],
+                { cancelable: true },
+              );
+            },
+          },
+        ],
+        { cancelable: true },
+      );
     }
   };
 
@@ -88,6 +152,21 @@ export default function ScanTab() {
           <View style={styles.actionTextWrap}>
             <Text style={styles.actionTitle}>从相册选择</Text>
             <Text style={styles.actionDesc}>挑选一张已有的房间照片进行分析</Text>
+          </View>
+          <MaterialIcons name="chevron-right" size={24} color={colors.onSurfaceVariant} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionCard, styles.secondaryCard]}
+          onPress={handlePreciseScan}
+          activeOpacity={0.85}
+        >
+          <View style={[styles.iconCircle, styles.iconCircleSecondary]}>
+            <MaterialIcons name="tune" size={32} color={colors.primary} />
+          </View>
+          <View style={styles.actionTextWrap}>
+            <Text style={styles.actionTitle}>精准扫描</Text>
+            <Text style={styles.actionDesc}>先选择房间场景，AI 识别更精准</Text>
           </View>
           <MaterialIcons name="chevron-right" size={24} color={colors.onSurfaceVariant} />
         </TouchableOpacity>

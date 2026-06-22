@@ -133,28 +133,39 @@ export default function ResultScreen() {
         {/* ── 优化清单 ── */}
         <Text style={styles.sectionTitle}>优化清单</Text>
         {result.suggestions.map((suggestion, index) => {
-          const isHighConfidence = index === 0 || (result.clutterItems[0]?.confidence ?? 0) >= 0.8;
+          const isFirst = index === 0;
+          const isHighConfidence = isFirst || (result.clutterItems[0]?.confidence ?? 0) >= 0.8;
           return (
             <TouchableOpacity
               key={suggestion.id}
-              style={styles.optimizationCard}
+              style={[
+                styles.optimizationCard,
+                isFirst && styles.optimizationCardFirst,
+              ]}
               onPress={() => router.push(`/detail/${suggestion.id}`)}
               activeOpacity={0.8}
             >
+              {/* 第一条建议的"先做这个"标签 */}
+              {isFirst && (
+                <View style={styles.startHereBadge}>
+                  <MaterialIcons name="play-arrow" size={14} color="#FFF" />
+                  <Text style={styles.startHereText}>先做这个</Text>
+                </View>
+              )}
               <View style={styles.optRow}>
                 {/* 左侧图标：圆形 40x40 */}
                 <View style={[
                   styles.optIcon,
                   {
-                    backgroundColor: suggestion.type === 'must_do'
+                    backgroundColor: isFirst
                       ? '#E8F5E9'
                       : '#FFF3E0',
                   },
                 ]}>
                   <MaterialIcons
-                    name={suggestion.type === 'must_do' ? 'priority-high' : 'checklist'}
+                    name={isFirst ? 'priority-high' : 'checklist'}
                     size={20}
-                    color={suggestion.type === 'must_do' ? colors.primary : colors.warmAmber}
+                    color={isFirst ? colors.primary : colors.warmAmber}
                   />
                 </View>
 
@@ -166,7 +177,7 @@ export default function ResultScreen() {
                     <View style={[
                       styles.typePill,
                       {
-                        backgroundColor: suggestion.type === 'must_do'
+                        backgroundColor: isFirst
                           ? '#FFEBEE'
                           : colors.surfaceContainer,
                       },
@@ -174,12 +185,12 @@ export default function ResultScreen() {
                       <Text style={[
                         styles.typePillText,
                         {
-                          color: suggestion.type === 'must_do'
+                          color: isFirst
                             ? '#D32F2F'
                             : colors.onSurfaceVariant,
                         },
                       ]}>
-                        {suggestion.type === 'must_do' ? '必做' : '备选'}
+                        {isFirst ? '必做' : '备选'}
                       </Text>
                     </View>
                     {/* 难度 star */}
@@ -344,6 +355,26 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.sm + 4,
     ...shadows.card,
+  },
+  optimizationCardFirst: {
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  startHereBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    marginBottom: spacing.sm,
+    gap: 4,
+  },
+  startHereText: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.labelCaps.fontSize,
+    color: '#FFF',
   },
   optRow: {
     flexDirection: 'row',

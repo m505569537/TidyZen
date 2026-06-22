@@ -18,12 +18,18 @@ interface AnalysisState {
   // 用户纠错选择的场景
   selectedScenarios: ScenarioId[];
 
+  // 用户在「精准扫描」入口预先选择的场景（拍照前由用户指定）。
+  // 传入 AI 提示词，用来让模型重点关注该场景相关的杂物类型。
+  // null 表示未指定（兼容普通拍照/相册流程）。
+  selectedScene: string | null;
+
   // 操作
   setPhoto: (uri: string, base64: string) => void;
   setAnalyzing: () => void;
   setResult: (result: AnalysisResult, elapsedMs?: number) => void;
   setCorrecting: () => void;
   setSelectedScenarios: (scenarios: ScenarioId[]) => void;
+  setSelectedScene: (scene: string | null) => void;
   reset: () => void;
 }
 
@@ -34,6 +40,7 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   result: null,
   elapsedMs: null,
   selectedScenarios: [],
+  selectedScene: null,
 
   setPhoto: (uri, base64) =>
     set({ photoUri: uri, photoBase64: base64, step: 'captured' }),
@@ -47,6 +54,8 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
 
   setSelectedScenarios: (scenarios) => set({ selectedScenarios: scenarios }),
 
+  setSelectedScene: (scene) => set({ selectedScene: scene }),
+
   reset: () =>
     set({
       step: 'idle',
@@ -55,5 +64,6 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
       result: null,
       elapsedMs: null,
       selectedScenarios: [],
+      selectedScene: null,
     }),
 }));

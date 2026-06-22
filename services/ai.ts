@@ -45,16 +45,26 @@ const BUILD_ANALYSIS_PROMPT = `你是一个专业的室内整洁度分析师。�
 
 bbox 说明：[x, y, w, h] 为该类别杂物的整体外接矩形，所有值均归一化到 0-1（x、y 为左上角坐标，w、h 为宽高）。bbox 必须精确覆盖该物品本体，不要把周围的桌面/墙面/地面区域也圈进去。
 
+扫描方法（必须严格执行）：
+按以下顺序逐一检查每个区域，不要遗漏：
+1. 地面 — 散落的衣物、垃圾、快递盒、鞋子、杂物
+2. 桌面/台面 — 堆积的物品、外卖盒、空瓶、散乱杂物
+3. 椅子/沙发 — 堆放的衣物、包包、杂物
+4. 床铺 — 散乱的衣物、杂物（被子枕头不算）
+5. 角落/边缘 — 堆积的杂物、垃圾袋、纸箱
+6. 其他可见表面 — 窗台、柜子顶部等
+
 要求：
 1. 只识别真实可见的杂物，不要凭空捏造。
-2. **只识别你非常有把握的物品。如果不确定一个物体到底是什么，绝对不要把它加入 clutter_items。** 宁可漏报也不要误报——比如不要把笔记本电脑屏幕、显示器、电视画面误判为"纸箱"，不要把家具(床、桌、椅、柜)、书架、书籍封面上的图案、墙上的画/海报、装饰品当成杂物。
-3. **bbox 必须严格贴合物品的真实轮廓**，不能用整个房间或大片背景充数；如果一个类别的物品分散在多处，给出包含主要物品的最小外接矩形即可。
-4. **场景判断**：如果画面里出现笔记本电脑/台式机/显示器/键盘/办公椅+桌面，scene 必须填 desk_area。在 desk_area 场景下，只识别桌面上真正堆积的物理杂物（散乱衣物、垃圾、外卖盒、纠缠的电线、空瓶子等），**不要把屏幕里显示的内容、桌面上正常使用中的电脑/键盘/鼠标/显示器当成杂物**。
-5. 如果画面非常整洁，clutter_items 可以为空数组——这是合法且常见的结果。
-6. confidence 要诚实反映识别把握。只有当你能清晰看出物品形状、且 100% 确定它属于所选类别时，才给出 ≥ 0.7 的分数；任何模糊、遮挡、看不清的物体应当低于 0.7（这些会被过滤掉）。不要全部填 0.95。
-7. area_ratio 要符合视觉感受，不要超过 1。
-8. 严格按 JSON 输出，不要任何前后缀。
-9. 如果 scene 是 unknown，overall_notes 必须说明为什么这不是室内房间照片。`;
+2. **宁可多报也不要漏报。** 如果你 50% 以上把握认为某物是杂物，就应该报告。用户需要你帮他发现他忽略的问题。只有完全无法辨认的模糊色块才应该跳过。
+3. 不要把家具(床、桌、椅、柜)、书架、墙上的画/海报、装饰品当成杂物。
+4. **bbox 必须严格贴合物品的真实轮廓**，不能用整个房间或大片背景充数；如果一个类别的物品分散在多处，给出包含主要物品的最小外接矩形即可。
+5. **场景判断**：如果画面里出现笔记本电脑/台式机/显示器/键盘/办公椅+桌面，scene 必须填 desk_area。在 desk_area 场景下，只识别桌面上真正堆积的物理杂物（散乱衣物、垃圾、外卖盒、纠缠的电线、空瓶子等），**不要把屏幕里显示的内容、桌面上正常使用中的电脑/键盘/鼠标/显示器当成杂物**。
+6. 如果画面非常整洁，clutter_items 可以为空数组——这是合法且常见的结果。
+7. confidence 要诚实反映识别把握。清晰可见的物品给 0.7-0.95，有遮挡或不太确定的给 0.4-0.7，完全模糊的给 < 0.4。不要全部填 0.95。
+8. area_ratio 要符合视觉感受，不要超过 1。
+9. 严格按 JSON 输出，不要任何前后缀。
+10. 如果 scene 是 unknown，overall_notes 必须说明为什么这不是室内房间照片。`;
 
 /** 生成唯一 ID */
 function generateId(): string {
@@ -80,15 +90,24 @@ function calculateScore(
 export async function analyzeImage(
   imageBase64: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _userCorrection?: string // 用户手动选择的场景 ID（纠错模式下传入，预留）
+  _userCorrection?: string, // 用户手动选择的场景 ID（纠错模式下传入，预留）
+  selectedScene?: string, // 「精准扫描」入口用户预先指定的场景 ID（bedroom / living_room / desk_area / bathroom）
 ): Promise<AnalysisResult> {
   if (!API_ENDPOINT || !API_KEY) {
     throw new Error('AI API 未配置：请检查 EXPO_PUBLIC_AI_API_URL 和 EXPO_PUBLIC_AI_API_KEY');
   }
 
+  // 「精准扫描」模式下，在通用提示词前面加一句场景指引，提升识别精准度。
+  const promptText = selectedScene
+    ? `用户认为这是【${selectedScene}】场景，请重点关注该场景相关的杂物类型。\n\n${BUILD_ANALYSIS_PROMPT}`
+    : BUILD_ANALYSIS_PROMPT;
+
   console.log('[AI] Endpoint:', API_ENDPOINT);
   console.log('[AI] Key prefix:', API_KEY.slice(0, 8) + '...');
   console.log('[AI] base64 length:', imageBase64.length, '(~', Math.round(imageBase64.length * 0.75 / 1024), 'KB)');
+  if (selectedScene) {
+    console.log('[AI] selectedScene:', selectedScene);
+  }
 
   let response: Response;
   try {
@@ -113,7 +132,7 @@ export async function analyzeImage(
               },
               {
                 type: 'text',
-                text: BUILD_ANALYSIS_PROMPT,
+                text: promptText,
               },
             ],
           },
@@ -185,8 +204,8 @@ export async function analyzeImage(
     throw new Error('NOT_ROOM');
   }
 
-  // 后处理：只保留模型高置信度（>= 0.7）的识别项，避免误报（如笔记本屏幕被识别为纸箱）。
-  const filteredItems = (raw.clutter_items ?? []).filter((item) => item.confidence >= 0.7);
+  // 后处理：过滤掉极低置信度（< 0.4）的识别项，保留中等置信度的让用户看到
+  const filteredItems = (raw.clutter_items ?? []).filter((item) => item.confidence >= 0.4);
   const score = calculateScore(filteredItems, raw.lighting);
   const maxConfidence = filteredItems.length > 0
     ? Math.max(...filteredItems.map((i) => i.confidence))

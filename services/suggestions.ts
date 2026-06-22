@@ -234,21 +234,15 @@ export function matchSuggestions(
 
   const suggestions: Suggestion[] = [];
 
-  // 主建议：优先级最高的场景
-  if (sortedScenes.length > 0) {
-    const primaryScene = sortedScenes[0];
-    const primarySuggestion = SUGGESTIONS_DB[primaryScene]?.find((s) => s.type === 'must_do');
-    if (primarySuggestion) suggestions.push(primarySuggestion);
+  // 最多给 5 条建议，覆盖所有识别到的问题场景
+  for (let i = 0; i < Math.min(sortedScenes.length, 5); i++) {
+    const sceneId = sortedScenes[i];
+    const type: SuggestionType = i === 0 ? 'must_do' : 'optional';
+    const suggestion = SUGGESTIONS_DB[sceneId]?.find((s) => s.type === type);
+    if (suggestion) suggestions.push(suggestion);
   }
 
-  // 备选建议：第二优先场景
-  if (sortedScenes.length > 1) {
-    const secondaryScene = sortedScenes[1];
-    const secondarySuggestion = SUGGESTIONS_DB[secondaryScene]?.find((s) => s.type === 'optional');
-    if (secondarySuggestion) suggestions.push(secondarySuggestion);
-  }
-
-  // 光线/氛围建议（附加，不占主/备选名额）
+  // 光线/氛围建议（附加，不占名额）
   if (lighting === 'dim' && !sortedScenes.includes('S10')) {
     const ambianceSuggestion = SUGGESTIONS_DB.S10.find((s) => s.type === 'must_do');
     if (ambianceSuggestion) suggestions.push(ambianceSuggestion);

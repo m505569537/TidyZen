@@ -7,10 +7,11 @@ interface ConfidenceBadgeProps {
 }
 
 export function ConfidenceBadge({ confidence }: ConfidenceBadgeProps) {
-  const isHigh = confidence >= 0.8;
-  const icon = isHigh ? 'check-circle' as const : 'warning' as const;
-  const label = isHigh ? '高置信' : '可能不太准';
-  const tint = isHigh ? colors.healingGreen : colors.warmAmber;
+  const isHigh = confidence >= 0.7;
+  const isMedium = confidence >= 0.4;
+  const icon = isHigh ? 'check-circle' as const : (isMedium ? 'info' as const : 'warning' as const);
+  const label = isHigh ? '高置信' : (isMedium ? '参考' : '不太确定');
+  const tint = isHigh ? colors.healingGreen : (isMedium ? colors.warmAmber : '#999');
 
   return (
     <View style={[styles.badge, { backgroundColor: tint + '20' }]}>

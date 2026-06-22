@@ -7,7 +7,7 @@ import { useAnalysisStore } from '../stores/analysis';
 import { analyzeImage } from '../services/ai';
 
 export default function AnalyzingScreen() {
-  const { photoBase64, setResult } = useAnalysisStore();
+  const { photoBase64, setResult, selectedScene } = useAnalysisStore();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const [percentage, setPercentage] = useState(0);
 
@@ -56,7 +56,7 @@ export default function AnalyzingScreen() {
       const startedAt = Date.now();
       try {
         console.log('[Analyzing] photoBase64 length:', photoBase64?.length ?? 0);
-        const result = await analyzeImage(photoBase64);
+        const result = await analyzeImage(photoBase64, undefined, selectedScene ?? undefined);
         result.photoUri = useAnalysisStore.getState().photoUri ?? '';
         const elapsedMs = Date.now() - startedAt;
         console.log('[Analyzing] completed in', elapsedMs, 'ms');
@@ -83,7 +83,7 @@ export default function AnalyzingScreen() {
 
     const timer = setTimeout(runAnalysis, 2000);
     return () => clearTimeout(timer);
-  }, [photoBase64, setResult]);
+  }, [photoBase64, setResult, selectedScene]);
 
   // Interpolate ring rotation for the dashed/dotted progress effect
   const ringRotation = progressAnim.interpolate({
