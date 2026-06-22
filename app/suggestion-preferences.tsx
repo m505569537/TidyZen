@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { spacing } from '../constants/theme';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { saveSetting, getSettings } from '../services/storage';
 
 // ── 杂物类型数据 ──
 interface ClutterCategory {
@@ -15,14 +16,17 @@ interface ClutterCategory {
   enabled: boolean;
 }
 
-const defaultCategories: ClutterCategory[] = [
+/** AsyncStorage settings 中存放偏好的键：值为 Record<id, boolean> 的 JSON 串 */
+const PREFERENCES_KEY = 'suggestion_preferences';
+
+/** 杂物分类静态定义（不含 enabled，运行时合并已保存偏好） */
+const CATEGORY_DEFS: Omit<ClutterCategory, 'enabled'>[] = [
   {
     id: '1',
     name: '衣物与织物',
     desc: '床面、沙发或椅子上的散乱衣物',
     icon: 'tshirt-crew-outline',
     iconBg: '#E8F5E9',
-    enabled: true,
   },
   {
     id: '2',
@@ -30,7 +34,6 @@ const defaultCategories: ClutterCategory[] = [
     desc: '书桌、餐桌等平面上的零散物品',
     icon: 'desk-lamp-on',
     iconBg: '#F5F5F5',
-    enabled: true,
   },
   {
     id: '3',
@@ -38,7 +41,6 @@ const defaultCategories: ClutterCategory[] = [
     desc: '地板上堆放的杂物与未归类物品',
     icon: 'floor-lamp-outline',
     iconBg: '#F5F5F5',
-    enabled: false,
   },
   {
     id: '4',
@@ -46,7 +48,6 @@ const defaultCategories: ClutterCategory[] = [
     desc: '未拆封的快递与闲置纸箱',
     icon: 'package-variant-closed',
     iconBg: '#E8F5E9',
-    enabled: true,
   },
   {
     id: '5',
@@ -54,19 +55,74 @@ const defaultCategories: ClutterCategory[] = [
     desc: '杂乱的充电线、数据线和插座',
     icon: 'power-plug-outline',
     iconBg: '#FFF3E0',
-    enabled: true,
   },
 ];
 
+/** 默认偏好：除"地面堆积"外都开启（与原静态数据保持一致） */
+const DEFAULT_ENABLED: Record<string, boolean> = {
+  '1': true,
+  '2': true,
+  '3': false,
+  '4': true,
+  '5': true,
+};
+
 export default function SuggestionPreferencesScreen() {
-  const [categories, setCategories] = useState(defaultCategories);
+  const [categories, setCategories] = useState<ClutterCategory[]>(() =>
+    CATEGORY_DEFS.map((c) => ({ ...c, enabled: DEFAULT_ENABLED[c.id] ?? true }))
+  );
+
+  /** 把当前 enabled 映射持久化为 JSON 串 */
+  const persistPreferences = useCallback(async (next: ClutterCategory[]) => {
+    const map: Record<string, boolean> = {};
+    for (const c of next) map[c.id] = c.enabled;
+    await saveSetting(PREFERENCES_KEY, JSON.stringify(map));
+  }, []);
+
+  // 页面聚焦时从 storage 加载偏好
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        const settings = await getSettings();
+        const raw = settings[PREFERENCES_KEY];
+        let saved: Record<string, boolean> = {};
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              saved = parsed;
+            }
+          } catch {
+            // 解析失败回退默认
+          }
+        }
+        if (cancelled) return;
+        setCategories(
+          CATEGORY_DEFS.map((c) => ({
+            ...c,
+            // 已保存的偏好优先；否则用默认；最后兜底为 true
+            enabled: typeof saved[c.id] === 'boolean'
+              ? saved[c.id]
+              : (DEFAULT_ENABLED[c.id] ?? true),
+          }))
+        );
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
 
   const toggleCategory = (id: string) => {
-    setCategories((prev) =>
-      prev.map((item) =>
+    setCategories((prev) => {
+      const next = prev.map((item) =>
         item.id === id ? { ...item, enabled: !item.enabled } : item
-      )
-    );
+      );
+      // 异步持久化，不阻塞 UI
+      persistPreferences(next);
+      return next;
+    });
   };
 
   const enabledCount = categories.filter((c) => c.enabled).length;
