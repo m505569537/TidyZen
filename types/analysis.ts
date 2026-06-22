@@ -75,6 +75,13 @@ export interface Suggestion extends SuggestionMeta {
   acceptance_criteria: string;
   video_id?: string;
   image_url?: string;
+  /** 品牌赞助信息（预留字段，用于未来品牌合作） */
+  sponsor?: {
+    name: string; // 品牌名称，如 "宜家"
+    logo?: string; // 品牌 logo URL
+    link?: string; // 品牌链接
+    message?: string; // 赞助文案，如 "本建议由宜家赞助"
+  };
 }
 
 /** AI 分析 API 请求 */
