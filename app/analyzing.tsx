@@ -5,9 +5,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
 import { analyzeImage } from '../services/ai';
+import { getLastScan } from '../services/storage';
 
 export default function AnalyzingScreen() {
-  const { photoBase64, setResult, selectedScene } = useAnalysisStore();
+  const { photoBase64, setResult, selectedScene, setPreviousScan } = useAnalysisStore();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const [percentage, setPercentage] = useState(0);
 
@@ -60,6 +61,17 @@ export default function AnalyzingScreen() {
         result.photoUri = useAnalysisStore.getState().photoUri ?? '';
         const elapsedMs = Date.now() - startedAt;
         console.log('[Analyzing] completed in', elapsedMs, 'ms');
+
+        // Before/After 对比：在跳转到 result 前读取上次记录写入 store。
+        // 本次扫描的保存放在 result 页挂载时（确保分析成功并展示后再覆盖磁盘）。
+        try {
+          const prev = await getLastScan();
+          setPreviousScan(prev);
+        } catch (storageErr) {
+          // 读取失败不阻塞主流程，仅打印日志
+          console.warn('[Analyzing] getLastScan failed:', storageErr);
+        }
+
         setResult(result, elapsedMs);
         router.replace('/result');
       } catch (e: any) {
@@ -83,7 +95,7 @@ export default function AnalyzingScreen() {
 
     const timer = setTimeout(runAnalysis, 2000);
     return () => clearTimeout(timer);
-  }, [photoBase64, setResult, selectedScene]);
+  }, [photoBase64, setResult, selectedScene, setPreviousScan]);
 
   // Interpolate ring rotation for the dashed/dotted progress effect
   const ringRotation = progressAnim.interpolate({

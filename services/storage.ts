@@ -6,6 +6,7 @@ import type { HistoryRecord } from '../types/analysis';
 
 const HISTORY_KEY = '@tidyzen/history';
 const SETTINGS_KEY = '@tidyzen/settings';
+const LAST_SCAN_KEY = '@tidyzen/lastScan';
 
 /** 保存历史记录 */
 export async function saveHistoryRecord(record: HistoryRecord): Promise<void> {
@@ -34,9 +35,9 @@ export async function clearHistory(): Promise<void> {
   await AsyncStorage.removeItem(HISTORY_KEY);
 }
 
-/** 清除所有本地数据（历史 + 设置），用于退出登录 */
+/** 清除所有本地数据（历史 + 设置 + 上次扫描），用于退出登录 */
 export async function clearAllData(): Promise<void> {
-  await AsyncStorage.multiRemove([HISTORY_KEY, SETTINGS_KEY]);
+  await AsyncStorage.multiRemove([HISTORY_KEY, SETTINGS_KEY, LAST_SCAN_KEY]);
 }
 
 /** 保存设置 */
@@ -50,4 +51,24 @@ export async function saveSetting(key: string, value: string): Promise<void> {
 export async function getSettings(): Promise<Record<string, string>> {
   const raw = await AsyncStorage.getItem(SETTINGS_KEY);
   return raw ? JSON.parse(raw) : {};
+}
+
+/** 保存上次扫描的照片和分数（用于 Before/After 对比） */
+export async function saveLastScan(photoUri: string, score: number): Promise<void> {
+  await AsyncStorage.setItem(LAST_SCAN_KEY, JSON.stringify({ photoUri, score }));
+}
+
+/** 读取上次扫描记录；首次扫描返回 null */
+export async function getLastScan(): Promise<{ photoUri: string; score: number } | null> {
+  const raw = await AsyncStorage.getItem(LAST_SCAN_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.photoUri === 'string' && typeof parsed?.score === 'number') {
+      return { photoUri: parsed.photoUri, score: parsed.score };
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }

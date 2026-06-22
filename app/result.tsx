@@ -6,12 +6,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
 import { useHistoryStore } from '../stores/history';
-import { saveHistoryRecord, getHistoryRecords } from '../services/storage';
+import { saveHistoryRecord, getHistoryRecords, saveLastScan } from '../services/storage';
 import { BoundingBox, ConfidenceBadge } from '../components';
 import type { HistoryRecord } from '../types/analysis';
 
 export default function ResultScreen() {
-  const { result, elapsedMs, setCorrecting, reset } = useAnalysisStore();
+  const { result, elapsedMs, previousScan, setCorrecting, reset } = useAnalysisStore();
   const [photoSize, setPhotoSize] = useState({ width: 0, height: 0 });
   const savedIdRef = useRef<string | null>(null);
 
@@ -33,6 +33,16 @@ export default function ResultScreen() {
       };
       await saveHistoryRecord(record);
       useHistoryStore.getState().addRecord(record);
+
+      // Before/After：本次扫描结果展示后，覆盖磁盘里的 lastScan，
+      // 下一次扫描就能读到本次的照片和分数做对比。
+      if (result.photoUri) {
+        try {
+          await saveLastScan(result.photoUri, result.score);
+        } catch (err) {
+          console.warn('[Result] saveLastScan failed:', err);
+        }
+      }
     })();
   }, [result]);
 
@@ -129,6 +139,55 @@ export default function ResultScreen() {
             <MaterialIcons name="chevron-right" size={20} color={colors.onSurface} />
           </TouchableOpacity>
         )}
+
+        {/* ── Before/After 对比：仅在有上次扫描记录时显示 ── */}
+        {previousScan && (() => {
+          const delta = result.score - previousScan.score;
+          const improved = delta > 0;
+          const deltaColor = delta === 0
+            ? colors.onSurfaceVariant
+            : improved
+              ? colors.healingGreen
+              : colors.error;
+          const deltaSign = delta > 0 ? '+' : delta < 0 ? '−' : '±';
+          const deltaText = delta === 0
+            ? '分数持平'
+            : improved
+              ? `↑ 进步了 ${delta} 分！`
+              : `↓ 下降了 ${Math.abs(delta)} 分`;
+          return (
+            <View style={styles.compareCard}>
+              <Text style={styles.compareTitle}>与上次对比</Text>
+              <View style={styles.compareRow}>
+                {/* 左：上次照片 */}
+                <View style={styles.compareCol}>
+                  <Image source={{ uri: previousScan.photoUri }} style={styles.compareImage} resizeMode="cover" />
+                  <Text style={styles.compareLabel}>上次</Text>
+                  <Text style={styles.compareScore}>{previousScan.score}</Text>
+                </View>
+
+                {/* 中：分数变化 */}
+                <View style={styles.compareDeltaWrap}>
+                  <Text style={[styles.compareDelta, { color: deltaColor }]}>
+                    {deltaSign}{Math.abs(delta)}
+                  </Text>
+                  <Text style={[styles.compareDeltaHint, { color: deltaColor }]}>
+                    {deltaText}
+                  </Text>
+                </View>
+
+                {/* 右：当前照片 */}
+                <View style={styles.compareCol}>
+                  <Image source={{ uri: result.photoUri }} style={styles.compareImage} resizeMode="cover" />
+                  <Text style={styles.compareLabel}>当前</Text>
+                  <Text style={[styles.compareScore, { color: getScoreColor(result.score) }]}>
+                    {result.score}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          );
+        })()}
 
         {/* ── 优化清单 ── */}
         <Text style={styles.sectionTitle}>优化清单</Text>
@@ -472,5 +531,65 @@ const styles = StyleSheet.create({
     fontFamily: 'BeVietnamPro_600SemiBold',
     fontSize: typography.bodyLg.fontSize,
     color: colors.onPrimary,
+  },
+
+  // ── Before/After 对比卡片 ──
+  compareCard: {
+    backgroundColor: colors.paperWhite,
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    ...shadows.card,
+  },
+  compareTitle: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: typography.bodyLg.fontSize,
+    color: colors.onSurface,
+    marginBottom: spacing.md,
+  },
+  compareRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  compareCol: {
+    alignItems: 'center',
+    width: 120,
+  },
+  compareImage: {
+    width: 120,
+    height: 160,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceContainer,
+  },
+  compareLabel: {
+    fontFamily: 'BeVietnamPro_500Medium',
+    fontSize: typography.labelCaps.fontSize,
+    color: colors.onSurfaceVariant,
+    marginTop: spacing.sm,
+  },
+  compareScore: {
+    fontFamily: 'BeVietnamPro_800ExtraBold',
+    fontSize: 24,
+    lineHeight: 30,
+    color: colors.onSurface,
+    marginTop: 2,
+  },
+  compareDeltaWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xs,
+  },
+  compareDelta: {
+    fontFamily: 'BeVietnamPro_800ExtraBold',
+    fontSize: 36,
+    lineHeight: 42,
+  },
+  compareDeltaHint: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.labelCaps.fontSize,
+    textAlign: 'center',
+    marginTop: 4,
   },
 });

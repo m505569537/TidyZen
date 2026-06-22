@@ -23,6 +23,10 @@ interface AnalysisState {
   // null 表示未指定（兼容普通拍照/相册流程）。
   selectedScene: string | null;
 
+  // 上次扫描的照片和分数（用于 result 页 Before/After 对比）。
+  // 首次扫描为 null。
+  previousScan: { photoUri: string; score: number } | null;
+
   // 操作
   setPhoto: (uri: string, base64: string) => void;
   setAnalyzing: () => void;
@@ -30,6 +34,7 @@ interface AnalysisState {
   setCorrecting: () => void;
   setSelectedScenarios: (scenarios: ScenarioId[]) => void;
   setSelectedScene: (scene: string | null) => void;
+  setPreviousScan: (scan: { photoUri: string; score: number } | null) => void;
   reset: () => void;
 }
 
@@ -41,6 +46,7 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
   elapsedMs: null,
   selectedScenarios: [],
   selectedScene: null,
+  previousScan: null,
 
   setPhoto: (uri, base64) =>
     set({ photoUri: uri, photoBase64: base64, step: 'captured' }),
@@ -56,6 +62,8 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
 
   setSelectedScene: (scene) => set({ selectedScene: scene }),
 
+  setPreviousScan: (scan) => set({ previousScan: scan }),
+
   reset: () =>
     set({
       step: 'idle',
@@ -65,5 +73,6 @@ export const useAnalysisStore = create<AnalysisState>((set) => ({
       elapsedMs: null,
       selectedScenarios: [],
       selectedScene: null,
+      previousScan: null,
     }),
 }));
