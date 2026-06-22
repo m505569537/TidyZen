@@ -153,9 +153,12 @@
 - [x] **建议数量优化** — 从 1-2 条扩展到 3-5 条，第一条标"先做这个" (2325d2d)
 - [ ] **视频教程内容** — 接入真实视频资源
 
-### P3 — 上架准备
+### P3 — 上架准备 ✅ 完成 (2026-06-22)
 
-- [ ] App Store 图标 / 启动屏 / 截图
+- [x] App Store 截图 — 9 张 PNG (6.7"/6.5"/5.5" × 3 页面) (8ac9655)
+- [x] App 描述和关键词 — docs/app-store/ (8ac9655)
+- [x] 隐私政策和支持页面 — docs/privacy-policy.html + docs/support.html (8ac9655)
+- [x] app.json 配置 — splash、buildNumber、versionCode (8ac9655)
 - [ ] ScoreGauge 真实 SVG 进度环
 - [ ] Tab 导航对齐设计稿（4 入口）
 - [ ] 各页面细节打磨
