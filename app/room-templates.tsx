@@ -1,9 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { spacing } from '../constants/theme';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { saveSetting, getSettings } from '../services/storage';
+import type { SceneLabel } from '../types/analysis';
 
 // ── 房间模板数据 ──
 interface RoomTemplate {
@@ -12,64 +14,115 @@ interface RoomTemplate {
   icon: keyof typeof MaterialIcons.glyphMap;
   desc: string;
   tags: string[];
+  /** 默认场景类型，用于 AI 分析时传给后端 */
+  defaultScene: SceneLabel;
   selected?: boolean;
 }
 
-const defaultTemplates: RoomTemplate[] = [
+/** 5 个内置房间模板 */
+const TEMPLATE_DEFS: RoomTemplate[] = [
   {
-    id: '1',
+    id: 'rental',
     name: '出租屋',
     icon: 'apartment',
     desc: '聚焦收纳空间不足与多功能分区优化，平衡生活与工作节奏。',
     tags: ['小户型', '多功能', '收纳'],
+    defaultScene: 'living_room',
   },
   {
-    id: '2',
+    id: 'dorm',
     name: '宿舍',
     icon: 'domain',
     desc: '适合学生宿舍的紧凑空间整理方案，兼顾学习与生活区域。',
     tags: ['紧凑空间', '共享', '学习区'],
+    defaultScene: 'bedroom',
   },
   {
-    id: '3',
+    id: 'bedroom',
     name: '卧室',
     icon: 'bed',
     desc: '打造舒适的睡眠与休息环境，优化衣物收纳与床面整洁。',
     tags: ['睡眠', '衣物收纳', '舒适'],
-    selected: true,
+    defaultScene: 'bedroom',
   },
   {
-    id: '4',
+    id: 'living_room',
     name: '客厅',
     icon: 'weekend',
     desc: '公共区域的空间布局与动线优化，提升家庭生活品质。',
     tags: ['公共区域', '动线', '会客'],
+    defaultScene: 'living_room',
   },
   {
-    id: '5',
-    name: '厨房',
-    icon: 'restaurant',
-    desc: '厨房收纳、清洁与食材管理方案，让烹饪更高效。',
-    tags: ['烹饪', '清洁', '食材管理'],
-  },
-  {
-    id: '6',
-    name: '书房',
-    icon: 'menu-book',
-    desc: '书房整理与学习空间优化，营造专注的工作环境。',
-    tags: ['工作区', '学习', '专注'],
+    id: 'office',
+    name: '办公室',
+    icon: 'desktop-windows',
+    desc: '桌面与工位整理，营造专注的工作环境与高效动线。',
+    tags: ['工作区', '专注', '动线'],
+    defaultScene: 'desk_area',
   },
 ];
 
+/** AsyncStorage settings 内的键名，存放 JSON 字符串：string[] of template ids */
+const SELECTED_TEMPLATES_KEY = 'roomTemplates.selectedIds';
+
 export default function RoomTemplatesScreen() {
-  const [templates, setTemplates] = useState(defaultTemplates);
+  const [templates, setTemplates] = useState<RoomTemplate[]>(() =>
+    TEMPLATE_DEFS.map((t) => ({ ...t, selected: false }))
+  );
+
+  /** 把当前选中 id 集合持久化 */
+  const persistSelection = useCallback(async (next: RoomTemplate[]) => {
+    const ids = next.filter((t) => t.selected).map((t) => t.id);
+    await saveSetting(SELECTED_TEMPLATES_KEY, JSON.stringify(ids));
+  }, []);
+
+  // 页面聚焦时从 storage 读取已选模板
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        const settings = await getSettings();
+        const raw = settings[SELECTED_TEMPLATES_KEY];
+        let selectedIds: string[] = [];
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) selectedIds = parsed.filter((x) => typeof x === 'string');
+          } catch {
+            // 异常数据忽略，回退到无选中
+          }
+        }
+        if (cancelled) return;
+        setTemplates(
+          TEMPLATE_DEFS.map((t) => ({ ...t, selected: selectedIds.includes(t.id) }))
+        );
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
 
   const toggleSelect = (id: string) => {
-    setTemplates((prev) =>
-      prev.map((item) =>
+    setTemplates((prev) => {
+      const next = prev.map((item) =>
         item.id === id ? { ...item, selected: !item.selected } : item
-      )
-    );
+      );
+      // 持久化不阻塞 UI
+      persistSelection(next);
+      return next;
+    });
+  };
+
+  const handleConfirm = () => {
+    if (selectedCount === 0) {
+      Alert.alert('提示', '请至少选择一个房间模板');
+      return;
+    }
+    Alert.alert('已保存', `已选择 ${selectedCount} 个模板，AI 将基于此生成建议`, [
+      { text: '好的', onPress: () => router.canGoBack() && router.back() },
+    ]);
   };
 
   const selectedCount = templates.filter((t) => t.selected).length;
@@ -147,7 +200,7 @@ export default function RoomTemplatesScreen() {
         ))}
 
         {/* ── 确认按钮 ── */}
-        <TouchableOpacity style={styles.confirmBtn} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.confirmBtn} activeOpacity={0.8} onPress={handleConfirm}>
           <Text style={styles.confirmBtnText}>
             确认并开始优化
             {selectedCount > 0 ? `（已选 ${selectedCount} 项）` : ''}
