@@ -1,9 +1,11 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../constants/theme';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { getHistoryRecords } from '../services/storage';
+import type { HistoryRecord } from '../types/analysis';
 
 const MEDALS = [
   { id: 1, icon: 'nightlight-round' as const, bg: '#F5E6CC', color: '#D4A574', unlocked: true },
@@ -12,9 +14,88 @@ const MEDALS = [
   { id: 4, icon: 'lock' as const, bg: colors.surfaceContainer, color: colors.outline, unlocked: false },
 ];
 
+interface UserStats {
+  totalScans: number;
+  avgScore: number;
+  maxScore: number;
+  streakDays: number;
+}
+
+const EMPTY_STATS: UserStats = { totalScans: 0, avgScore: 0, maxScore: 0, streakDays: 0 };
+
+/** 计算最长连续扫描天数：按 createdAt 当地日期归并 */
+function calcMaxStreak(records: HistoryRecord[]): number {
+  if (records.length === 0) return 0;
+  const days = Array.from(
+    new Set(
+      records.map((r) => {
+        const d = new Date(r.createdAt);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      })
+    )
+  ).sort();
+
+  let best = 1;
+  let cur = 1;
+  for (let i = 1; i < days.length; i++) {
+    const diff = Math.round(
+      (new Date(days[i]).getTime() - new Date(days[i - 1]).getTime()) / 86_400_000
+    );
+    if (diff === 1) {
+      cur += 1;
+      best = Math.max(best, cur);
+    } else {
+      cur = 1;
+    }
+  }
+  return best;
+}
+
+function computeStats(records: HistoryRecord[]): UserStats {
+  if (records.length === 0) return EMPTY_STATS;
+  const total = records.length;
+  const sum = records.reduce((acc, r) => acc + r.score, 0);
+  const max = records.reduce((acc, r) => Math.max(acc, r.score), 0);
+  return {
+    totalScans: total,
+    avgScore: Math.round(sum / total),
+    maxScore: max,
+    streakDays: calcMaxStreak(records),
+  };
+}
+
+/** 等级公式：每 5 次扫描升 1 级，最少 Lv.1，最多 Lv.99 */
+function deriveLevel(scans: number): number {
+  if (scans <= 0) return 1;
+  return Math.max(1, Math.min(99, Math.floor(scans / 5) + 1));
+}
+
 export default function ProfileScreen() {
   const [nickname, setNickname] = useState('陈洁');
   const [gender, setGender] = useState<'male' | 'female' | 'secret'>('male');
+  const [stats, setStats] = useState<UserStats>(EMPTY_STATS);
+
+  // 页面聚焦时刷新统计数据
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        const records = await getHistoryRecords();
+        if (cancelled) return;
+        setStats(computeStats(records));
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
+
+  const level = deriveLevel(stats.totalScans);
+  // 当前等级的进度：在本级内的扫描数 / 5
+  const levelProgress = stats.totalScans > 0 ? (stats.totalScans % 5) / 5 : 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -43,13 +124,13 @@ export default function ProfileScreen() {
           <View style={styles.levelCard}>
             <View style={styles.levelCardContent}>
               <View style={styles.levelCardLeft}>
-                <Text style={styles.levelLabel}>{'当前等级'}</Text>
-                <Text style={styles.levelNumber}>85</Text>
+                <Text style={styles.levelLabel}>{'平均得分'}</Text>
+                <Text style={styles.levelNumber}>{stats.avgScore}</Text>
                 <View style={styles.progressBar}>
-                  <View style={styles.progressFill} />
-                  <View style={styles.progressEmpty} />
+                  <View style={[styles.progressFill, { flex: Math.max(0.0001, levelProgress) }]} />
+                  <View style={[styles.progressEmpty, { flex: Math.max(0.0001, 1 - levelProgress) }]} />
                 </View>
-                <Text style={styles.levelRank}>Lv.12</Text>
+                <Text style={styles.levelRank}>{`Lv.${level}`}</Text>
               </View>
               <MaterialIcons name='bar-chart' size={48} color='#D0D0D0' />
             </View>
@@ -58,6 +139,30 @@ export default function ProfileScreen() {
             <MaterialIcons name='military-tech' size={28} color='#B2DFDB' />
             <Text style={styles.titleLabel}>{'当前称号'}</Text>
             <Text style={styles.titleName}>{'极简主义新星'}</Text>
+          </View>
+        </View>
+
+        {/* ── 数据统计 4 宫格 ── */}
+        <View style={styles.statsGrid}>
+          <View style={styles.statCell}>
+            <MaterialIcons name='photo-camera' size={20} color={colors.primary} />
+            <Text style={styles.statValue}>{stats.totalScans}</Text>
+            <Text style={styles.statLabel}>{'扫描次数'}</Text>
+          </View>
+          <View style={styles.statCell}>
+            <MaterialIcons name='trending-up' size={20} color={colors.healingGreen} />
+            <Text style={styles.statValue}>{stats.avgScore}</Text>
+            <Text style={styles.statLabel}>{'平均分'}</Text>
+          </View>
+          <View style={styles.statCell}>
+            <MaterialIcons name='emoji-events' size={20} color={colors.warmAmber} />
+            <Text style={styles.statValue}>{stats.maxScore}</Text>
+            <Text style={styles.statLabel}>{'最高分'}</Text>
+          </View>
+          <View style={styles.statCell}>
+            <MaterialIcons name='local-fire-department' size={20} color={colors.error} />
+            <Text style={styles.statValue}>{stats.streakDays}</Text>
+            <Text style={styles.statLabel}>{'连续天数'}</Text>
           </View>
         </View>
         <View style={styles.editSection}>
@@ -142,6 +247,17 @@ const styles = StyleSheet.create({
   titleCard: { flex: 1, backgroundColor: colors.primaryDark, borderRadius: radius.lg, padding: spacing.md, alignItems: 'center', justifyContent: 'center', ...shadows.card },
   titleLabel: { fontFamily: 'BeVietnamPro_400Regular', fontSize: 12, color: colors.primaryContainer, marginTop: spacing.xs },
   titleName: { fontFamily: 'BeVietnamPro_700Bold', fontSize: 18, color: colors.paperWhite, marginTop: 4, textAlign: 'center' },
+  statsGrid: {
+    flexDirection: 'row',
+    backgroundColor: colors.paperWhite,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.lg,
+    ...shadows.card,
+  },
+  statCell: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  statValue: { fontFamily: 'BeVietnamPro_700Bold', fontSize: 20, color: colors.primary },
+  statLabel: { fontFamily: 'BeVietnamPro_400Regular', fontSize: 12, color: colors.onSurfaceVariant },
   editSection: { marginBottom: spacing.md },
   editLabel: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: 14, color: colors.primary, marginBottom: spacing.sm },
   editInput: { backgroundColor: colors.paperWhite, borderWidth: 1, borderColor: colors.outlineVariant, borderRadius: radius.md, height: 50, paddingHorizontal: spacing.md, fontFamily: 'BeVietnamPro_400Regular', fontSize: 16, color: colors.onSurface },
