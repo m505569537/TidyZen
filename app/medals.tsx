@@ -1,8 +1,10 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { getHistoryRecords } from '../services/storage';
+import type { HistoryRecord } from '../types/analysis';
 
 // ── 设计稿色板（严格对齐 docs/designs/medals_design.md）──
 const DESIGN = {
@@ -34,16 +36,90 @@ interface Medal {
   category: 'advance' | 'challenge';
 }
 
-const MEDALS: Medal[] = [
-  { id: 'first-clean',  label: '首次整理',   icon: 'broom',                  unlocked: true,  bgVariant: 'green',  category: 'advance' },
-  { id: 'streak-7',     label: '连续7天',    icon: 'fire',                   unlocked: true,  bgVariant: 'yellow', category: 'advance' },
-  { id: 'score-90',     label: '得分90+',    icon: 'star-outline',           unlocked: true,  bgVariant: 'green',  category: 'advance' },
-  { id: 'kitchen-pro',  label: '厨房达人',   icon: 'silverware-fork-knife',  unlocked: true,  bgVariant: 'yellow', category: 'advance' },
-  { id: 'bedroom-pro',  label: '卧室达人',   icon: 'bed-outline',            unlocked: false,                       category: 'advance' },
-  { id: 'desk-master',  label: '书桌大师',   icon: 'desk',                   unlocked: false,                       category: 'advance' },
-  { id: 'monthly-king', label: '月度之星',   icon: 'crown-outline',          unlocked: true,  bgVariant: 'green',  category: 'challenge' },
-  { id: 'photo-100',    label: '百张照片',   icon: 'camera-outline',         unlocked: false,                       category: 'challenge' },
-  { id: 'spring-clean', label: '春日大扫除', icon: 'flower-outline',         unlocked: false,                       category: 'challenge' },
+/** 勋章定义（不含 unlocked，运行时根据历史记录计算） */
+interface MedalDef {
+  id: string;
+  label: string;
+  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  bgVariant: 'green' | 'yellow';
+  category: 'advance' | 'challenge';
+  /** 根据历史记录判定是否解锁 */
+  check: (ctx: MedalCtx) => boolean;
+}
+
+/** 计算勋章状态用的上下文 */
+interface MedalCtx {
+  records: HistoryRecord[];
+  count: number;
+  maxScore: number;
+  maxStreak: number;
+  uniqueScenes: number;
+}
+
+/** 计算最长连续扫描天数（按 createdAt 当地日期归并） */
+function calcMaxStreak(records: HistoryRecord[]): number {
+  if (records.length === 0) return 0;
+  // 抽取 YYYY-MM-DD 日期串去重并排序
+  const days = Array.from(
+    new Set(
+      records.map((r) => {
+        const d = new Date(r.createdAt);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      })
+    )
+  ).sort();
+
+  let best = 1;
+  let cur = 1;
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i - 1]);
+    const next = new Date(days[i]);
+    const diffDays = Math.round((next.getTime() - prev.getTime()) / 86_400_000);
+    if (diffDays === 1) {
+      cur += 1;
+      best = Math.max(best, cur);
+    } else {
+      cur = 1;
+    }
+  }
+  return best;
+}
+
+/** 用 clutterTags 的首个标签近似"场景"——HistoryRecord 不持久化 scene 字段 */
+function calcUniqueScenes(records: HistoryRecord[]): number {
+  const set = new Set<string>();
+  for (const r of records) {
+    const primary = r.clutterTags?.[0];
+    if (primary) set.add(primary);
+  }
+  return set.size;
+}
+
+const MEDAL_DEFS: MedalDef[] = [
+  // ── 进阶之路 ──
+  { id: 'first-scan',     label: '首次扫描',    icon: 'broom',                 bgVariant: 'green',  category: 'advance',
+    check: (c) => c.count >= 1 },
+  { id: 'tidy-pro',       label: '整理达人',    icon: 'star-outline',          bgVariant: 'yellow', category: 'advance',
+    check: (c) => c.count >= 10 },
+  { id: 'tidy-master',    label: '整理大师',    icon: 'crown-outline',         bgVariant: 'green',  category: 'advance',
+    check: (c) => c.count >= 50 },
+  { id: 'first-perfect',  label: '首次满分',    icon: 'trophy-outline',        bgVariant: 'yellow', category: 'advance',
+    check: (c) => c.maxScore >= 100 },
+  { id: 'streak-3',       label: '连续扫描',    icon: 'fire',                  bgVariant: 'yellow', category: 'advance',
+    check: (c) => c.maxStreak >= 3 },
+  { id: 'multi-scene',    label: '多场景探索',  icon: 'view-grid-outline',     bgVariant: 'green',  category: 'advance',
+    check: (c) => c.uniqueScenes >= 3 },
+
+  // ── 限时挑战（保留占位，暂不接业务）──
+  { id: 'monthly-king',   label: '月度之星',    icon: 'medal-outline',         bgVariant: 'green',  category: 'challenge',
+    check: () => false },
+  { id: 'photo-100',      label: '百张照片',    icon: 'camera-outline',        bgVariant: 'yellow', category: 'challenge',
+    check: (c) => c.count >= 100 },
+  { id: 'spring-clean',   label: '春日大扫除',  icon: 'flower-outline',        bgVariant: 'green',  category: 'challenge',
+    check: () => false },
 ];
 
 // ── 分类标签 ──
@@ -56,15 +132,49 @@ const CATEGORIES: { key: CategoryKey; label: string }[] = [
 
 export default function MedalsScreen() {
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('all');
+  const [medals, setMedals] = useState<Medal[]>(() =>
+    MEDAL_DEFS.map((d) => ({ ...d, unlocked: false }))
+  );
+
+  // 页面聚焦时刷新勋章解锁状态
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        const records = await getHistoryRecords();
+        const ctx: MedalCtx = {
+          records,
+          count: records.length,
+          maxScore: records.reduce((m, r) => Math.max(m, r.score), 0),
+          maxStreak: calcMaxStreak(records),
+          uniqueScenes: calcUniqueScenes(records),
+        };
+        if (cancelled) return;
+        setMedals(
+          MEDAL_DEFS.map((d) => ({
+            id: d.id,
+            label: d.label,
+            icon: d.icon,
+            bgVariant: d.bgVariant,
+            category: d.category,
+            unlocked: d.check(ctx),
+          }))
+        );
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
 
   const visibleMedals =
-    activeCategory === 'all' ? MEDALS : MEDALS.filter((m) => m.category === activeCategory);
+    activeCategory === 'all' ? medals : medals.filter((m) => m.category === activeCategory);
 
-  // 设计稿：进度条显示 15/100，再收集 5 枚即可升级
-  const currentMedals = 15;
-  const targetMedals = 100;
-  const remainingToLevelUp = 5;
-  const progressPercent = (currentMedals / targetMedals) * 100;
+  // 进度条按实际解锁勋章数 / 总勋章数计算
+  const currentMedals = medals.filter((m) => m.unlocked).length;
+  const targetMedals = medals.length;
+  const remainingToLevelUp = Math.max(0, targetMedals - currentMedals);
+  const progressPercent = targetMedals > 0 ? (currentMedals / targetMedals) * 100 : 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
