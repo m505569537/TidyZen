@@ -16,9 +16,9 @@ function TabIcon({
   return (
     <View
       style={{
-        width: 40,
-        height: 40,
-        borderRadius: 12,
+        width: 44,
+        height: 44,
+        borderRadius: 14,
         backgroundColor: focused ? '#E8F5E9' : 'transparent',
         alignItems: 'center',
         justifyContent: 'center',
@@ -40,13 +40,14 @@ export default function TabLayout() {
           backgroundColor: '#FFFFFF',
           borderTopColor: '#E0E0E0',
           borderTopWidth: 1,
-          height: 49,
-          paddingBottom: 4,
-          paddingTop: 4,
+          height: 65,
+          paddingBottom: 8,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
           fontFamily: 'BeVietnamPro_400Regular',
-          fontSize: 10,
+          fontSize: 12,
+          marginTop: 2,
         },
       }}
     >
