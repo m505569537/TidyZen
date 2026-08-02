@@ -1,5 +1,10 @@
 // AI 分析 API 服务
-// 对接 mimo-v2.5-pro 云端视觉模型（OpenAI 兼容接口）
+// 对接 doubao-seed-2.0-pro 云端视觉模型（火山引擎 Ark VLM，coding endpoint）
+// 2026-08-02 切换：原 mimo-v2.5-pro → 火山引擎豆包，原因：mimo 不可用，账号只买了 coding 套餐
+// 实测 endpoint: https://ark.cn-beijing.volces.com/api/coding/v1/chat/completions
+// 实测响应格式：OpenAI 兼容（choices+usage），model 字段值小写 `doubao-seed-2.0-pro`
+// 实测特性：1) 有 reasoning_content 字段（最长 1.3k tokens）→ 必须保留 fallback
+//           2) VLM 视觉输入 OK（已 curl 验证）3) 暂未观察到 ```json``` 包裹，但 strip 逻辑保留
 
 import type { AnalysisRawResponse, AnalysisResult, ClutterLabel } from '../types/analysis';
 import { CLUTTER_WEIGHTS } from '../types/analysis';
@@ -118,10 +123,11 @@ export async function analyzeImage(
         Authorization: `Bearer ${API_KEY}`,
       },
       body: JSON.stringify({
-        // 必须用 mimo-v2-omni（多模态/视觉模型）。
-        // mimo-v2.5 / mimo-v2.5-pro 是纯文本模型，传图片会返回
-        // 404 "No endpoints found that support image input"。
-        model: 'mimo-v2.5',
+        // 火山引擎豆包视觉模型 doubao-seed-2.0-pro（coding endpoint）
+        // 2026-08-02 从 mimo-v2.5 切换，原因：mimo 不可用，账号只买 coding 套餐
+        // 实测：coding endpoint 路径下 doubao-seed-2.0-pro 支持图片输入
+        // model 字段小写，严格匹配；reasoning_content 字段存在（最长 1.3k tokens）
+        model: 'doubao-seed-2.0-pro',
         messages: [
           {
             role: 'user',
@@ -161,8 +167,8 @@ export async function analyzeImage(
     throw new Error(`API 响应不是有效 JSON: ${jsonErr?.message ?? String(jsonErr)}`);
   }
   console.log('[AI] response keys:', Object.keys(data ?? {}));
-  // mimo-v2-omni 是推理模型：正常情况下 message.content 包含 JSON 答案，
-  // reasoning_content 包含思考链。但极少数情况下模型可能把答案错放在
+  // 火山引擎 doubao-seed-2.0-pro 是推理模型：正常情况下 message.content 包含 JSON 答案，
+  // reasoning_content 包含思考链（实测最长 1.3k tokens）。极少数情况下模型可能把答案错放在
   // reasoning_content 里 —— 因此 content 为空时降级使用 reasoning_content。
   const message = data?.choices?.[0]?.message ?? {};
   const rawContent: string = (message.content ?? '').trim();
@@ -183,7 +189,7 @@ export async function analyzeImage(
     if (match) content = match[0];
   }
 
-  // Strip markdown code blocks if present (mimo sometimes wraps JSON in ```json ... ```)
+  // Strip markdown code blocks if present (defensive — 豆包实测暂未包裹，但 mimo 有过)
   let cleanContent = content.trim();
   if (cleanContent.startsWith('```')) {
     cleanContent = cleanContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();

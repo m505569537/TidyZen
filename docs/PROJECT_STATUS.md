@@ -195,8 +195,8 @@
 
 | 项目 | 值 |
 |---|---|
-| AI API | mimo-v2.5 (小米视觉语言模型) |
-| API URL | `https://token-plan-cn.xiaomimimo.com/v1/chat/completions` |
+| AI API | doubao-seed-2.0-pro（火山引擎 Ark VLM，coding endpoint） |
+| API URL | `https://ark.cn-beijing.volces.com/api/coding/v1/chat/completions` |
 | API Key | `.env` 文件 (EXPO_PUBLIC_AI_API_KEY) |
 | Bundle ID | `com.anonymous.tidy-zen` |
 | iOS 模拟器 | iPhone 17 Pro (EC2A677A-33E9-4EF7-92AB-12438A662697) |

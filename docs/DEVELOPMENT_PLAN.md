@@ -2,7 +2,7 @@
 
 > **技术栈**: React Native (Expo) + TypeScript + Zustand
 > **设计系统**: TidyZen (Stitch 项目 12020854547316763944)
-> **AI 后端**: mimo-v2.5-pro 视觉模型 API
+> **AI 后端**: doubao-seed-2.0-pro 视觉模型 API（火山引擎 Ark coding endpoint，2026-08-02 切换）
 > **更新日期**: 2026-06-15
 
 ---
@@ -45,7 +45,7 @@ storage/
 │   ├── EmptyState.tsx       # 空状态占位组件
 │   └── SegmentedControl.tsx # 分段控制器
 ├── services/                # API 服务层
-│   ├── ai.ts               # AI 分析 API（mimo-v2.5-pro）
+│   ├── ai.ts               # AI 分析 API（doubao-seed-2.0-pro）
 │   ├── suggestions.ts      # 建议库匹配逻辑
 │   └── storage.ts          # 本地存储（SQLite/AsyncStorage）
 ├── stores/                 # Zustand 状态管理
@@ -210,7 +210,7 @@ storage/
 
 ### Phase 4: AI 集成（Day 8-9）
 
-- [ ] 封装 mimo-v2.5-pro API 调用（`services/ai.ts`）
+- [ ] 封装 doubao-seed-2.0-pro API 调用（`services/ai.ts`）
   - 构建结构化 Prompt（含 scene/clutter_items/lighting JSON Schema）
   - 图片压缩（expo-image-manipulator）→ Base64
   - 请求发送 + 超时处理（≤5秒）
@@ -263,7 +263,7 @@ storage/
 | 决策项 | 方案 | 原因 |
 |--------|------|------|
 | 拍照模式 | 伪AR（实时预览 + 拍照后云端分析） | MVP 成本低，准确率高 |
-| AI 模型 | mimo-v2.5-pro 云端 API | 已有订阅，大模型准确率优于端侧 |
+| AI 模型 | doubao-seed-2.0-pro 云端 API | 已有 coding 订阅，VLM 多模态支持 |
 | 图片处理 | 拍照后压缩至 1024×1024 → Base64 | 平衡画质与传输速度 |
 | 分析延迟 | 目标 ≤ 5秒 | PRD 性能要求 |
 | 状态管理 | Zustand | 轻量，适合中等复杂度 |
