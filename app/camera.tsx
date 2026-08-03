@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRef, useState } from 'react';
 import { colors, typography, spacing, radius } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
+import { analytics } from '../services/analytics';
 import { BoundingBox } from '../components';
 
 /**
@@ -78,6 +79,8 @@ export default function CameraScreen() {
       if (!photo?.uri || !photo?.base64) return;
       console.log('[camera] takePicture: base64 length=', photo.base64.length, 'prefix=', photo.base64.slice(0, 6));
       setPhoto(photo.uri, photo.base64);
+      // 埋点：用户拍照
+      analytics.photoTaken('camera', { base64_bytes: photo.base64.length });
       router.push('/analyzing');
     } catch (e: any) {
       console.error('[camera] takePicture failed:', e);
@@ -114,6 +117,8 @@ export default function CameraScreen() {
       // Try manipulator conversion, fall back to raw base64 from ImagePicker
       const { uri, base64 } = await toJpegBase64(asset.uri);
       setPhoto(uri, base64);
+      // 埋点：用户从相册选图
+      analytics.photoTaken('gallery', { base64_bytes: base64.length });
       router.push('/analyzing');
     } catch (e: any) {
       console.error('[camera] pickFromGallery failed:', e);

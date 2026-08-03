@@ -7,6 +7,7 @@ import { colors, typography, spacing, radius, shadows } from '../../constants/th
 import { Button } from '../../components';
 import { BoundingBox } from '../../components/BoundingBox';
 import { useAnalysisStore } from '../../stores/analysis';
+import { analytics } from '../../services/analytics';
 
 export default function DetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -190,6 +191,7 @@ export default function DetailScreen() {
         <TouchableOpacity
           style={styles.rescanButton}
           onPress={() => {
+            analytics.retakePhoto({});
             useAnalysisStore.getState().reset();
             router.replace('/camera');
           }}

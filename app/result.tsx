@@ -7,6 +7,7 @@ import { colors, typography, spacing, radius, shadows } from '../constants/theme
 import { useAnalysisStore } from '../stores/analysis';
 import { useHistoryStore } from '../stores/history';
 import { saveHistoryRecord, getHistoryRecords, saveLastScan } from '../services/storage';
+import { analytics } from '../services/analytics';
 import { BoundingBox, ConfidenceBadge } from '../components';
 import type { HistoryRecord } from '../types/analysis';
 
@@ -131,7 +132,11 @@ export default function ResultScreen() {
         {result.needsCorrection && (
           <TouchableOpacity
             style={styles.correctionBtn}
-            onPress={() => { setCorrecting(); router.push('/correction'); }}
+            onPress={() => {
+              analytics.errorReported({ originalScene: result.scene });
+              setCorrecting();
+              router.push('/correction');
+            }}
             activeOpacity={0.8}
           >
             <MaterialIcons name="touch-app" size={20} color={colors.onSurface} />
@@ -201,7 +206,10 @@ export default function ResultScreen() {
                 styles.optimizationCard,
                 isFirst && styles.optimizationCardFirst,
               ]}
-              onPress={() => router.push(`/detail/${suggestion.id}`)}
+              onPress={() => {
+                analytics.suggestionViewed(suggestion.id, suggestion.type);
+                router.push(`/detail/${suggestion.id}`);
+              }}
               activeOpacity={0.8}
             >
               {/* 第一条建议的"先做这个"标签 */}
@@ -286,7 +294,11 @@ export default function ResultScreen() {
         {/* ── 底部按钮：绿色胶囊 ── */}
         <TouchableOpacity
           style={styles.rescanBtn}
-          onPress={() => { reset(); router.replace('/camera'); }}
+          onPress={() => {
+            analytics.retakePhoto({ prevScore: previousScan?.score });
+            reset();
+            router.replace('/camera');
+          }}
           activeOpacity={0.8}
         >
           <MaterialIcons name="refresh" size={20} color={colors.onPrimary} />

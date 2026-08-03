@@ -6,6 +6,7 @@ import { colors, typography, spacing, radius } from '../constants/theme';
 import { useAnalysisStore } from '../stores/analysis';
 import { analyzeImage } from '../services/ai';
 import { getLastScan } from '../services/storage';
+import { analytics } from '../services/analytics';
 
 export default function AnalyzingScreen() {
   const { photoBase64, setResult, selectedScene, setPreviousScan } = useAnalysisStore();
@@ -61,6 +62,15 @@ export default function AnalyzingScreen() {
         result.photoUri = useAnalysisStore.getState().photoUri ?? '';
         const elapsedMs = Date.now() - startedAt;
         console.log('[Analyzing] completed in', elapsedMs, 'ms');
+
+        // 埋点：分析返回结果（含延迟、置信度、识别到的杂物）
+        analytics.analysisComplete({
+          score: result.score,
+          scene: result.scene,
+          clutterLabels: result.clutterItems.map((it) => it.label),
+          maxConfidence: result.maxConfidence,
+          latencyMs: elapsedMs,
+        });
 
         // Before/After 对比：在跳转到 result 前读取上次记录写入 store。
         // 本次扫描的保存放在 result 页挂载时（确保分析成功并展示后再覆盖磁盘）。
