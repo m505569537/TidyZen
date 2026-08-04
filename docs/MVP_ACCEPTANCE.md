@@ -243,11 +243,18 @@
 - 当前实现 `app/(tabs)/_layout.tsx`：首页/扫描/记录/我的 ✅
 - 改动：`(tabs)/_layout.tsx` 把 `name="settings"` 改为 `name="profile"`，title `"设置"` → `"我的"`，icon `settings` → `person`；新增 `app/(tabs)/profile.tsx`（从 root `app/profile.tsx` 迁移，import 路径 `../` → `../../`）；3 处路由引用同步更新（medals / notification-preferences / settings (root)）；删除 `app/(tabs)/settings.tsx` + root `app/profile.tsx`
 
-### 7.4 偏差：account.tsx 按钮
-- 设计稿有 5 个按钮（修改密码/退出登录/删除账号/隐私政策/用户协议）
-- 2026-08-02 修复（commit `26972d5`）
-- 当前 `app/account.tsx` 5 个按钮全部有 onPress ✅
-- 实现方案：复用 `Alert.alert`（不引入新 toast 库），3 个简单按钮弹"功能开发中 v1.1 上线"，改密码加 4 条本地校验（必填/长度/字母数字/两次一致），注销账号二次确认（"我再想想" / "仍要注销"）
+### 7.4 偏差：account.tsx + settings.tsx 按钮
+- 设计稿 PRD §7.4 写 5 个按钮（修改密码/退出登录/删除账号/隐私政策/用户协议），**实际代码 8 个无 onPress 按钮分布在 2 个文件**：
+  - `app/account.tsx` 5 个：手机·修改 / 微信·解绑 / 邮箱·去绑定 / 改密码·提交 / 注销账号
+  - `app/settings.tsx` 3 个：房间模板管理 / 建议库偏好 / 退出登录
+- 2026-08-02 修复（commit `26972d5` + `d29b996`）—— account 5 按钮 ✅
+- 2026-08-02 二次修复（commit 见下方）—— settings 3 按钮 ✅
+- 实现方案：复用 `Alert.alert`（不引入新 toast 库）
+  - 5 个简单按钮弹"功能开发中 v1.1 上线"
+  - 改密码加 4 条本地校验（必填/长度/字母数字/两次一致）
+  - 注销账号 + 退出登录 二次确认（"我再想想" / "仍要操作"）→ 提示开发中
+- 当前 8/8 按钮全部有 onPress ✅
+- 注：PRD 名字"删除账号"和"用户协议"实际代码里没出现（设计稿→实现有偏差，名字是大概对齐的）
 
 ---
 

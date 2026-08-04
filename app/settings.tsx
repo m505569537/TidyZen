@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -70,8 +70,17 @@ export default function SettingsScreen() {
 
         <Text style={styles.groupTitle}>个性化设置</Text>
         <View style={styles.groupCard}>
-          <SettingItem icon="home" label="房间模板管理" subtitle="租房、宿舍、卧室" onPress={() => {}} />
-          <SettingItem icon="tune" label="建议库偏好" onPress={() => {}} />
+          <SettingItem
+            icon="home"
+            label="房间模板管理"
+            subtitle="租房、宿舍、卧室"
+            onPress={() => Alert.alert('功能开发中', '房间模板管理功能正在开发中，预计 v1.1 上线。\n\n届时可按「租房/宿舍/卧室」等场景快速加载预设参数。')}
+          />
+          <SettingItem
+            icon="tune"
+            label="建议库偏好"
+            onPress={() => Alert.alert('功能开发中', '建议库偏好功能正在开发中，预计 v1.1 上线。\n\n届时可按个人偏好开关不同场景的「必做/可选」建议类型。')}
+          />
         </View>
 
         <Text style={styles.groupTitle}>系统设置</Text>
@@ -97,7 +106,24 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          activeOpacity={0.7}
+          onPress={() => {
+            Alert.alert(
+              '退出登录',
+              '退出登录后，您将无法使用以下功能：\n\n• 同步扫描记录到云端\n• 跨设备查看历史趋势\n• 解锁「整理达人」徽章\n\n退出登录功能正在开发中，预计 v1.1 上线。',
+              [
+                { text: '我再想想', style: 'cancel' },
+                {
+                  text: '仍要退出',
+                  style: 'destructive',
+                  onPress: () => Alert.alert('功能开发中', '退出登录功能正在开发中，预计 v1.1 上线。'),
+                },
+              ],
+            );
+          }}
+        >
           <Text style={styles.logoutText}>退出登录</Text>
         </TouchableOpacity>
       </ScrollView>
