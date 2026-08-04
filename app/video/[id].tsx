@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius } from '../../constants/theme';
+import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
 import { useAnalysisStore } from '../../stores/analysis';
 
 // 视频资源映射（预留，待接入真实视频文件）
@@ -74,17 +74,21 @@ export default function VideoScreen() {
           <View style={styles.placeholderContainer}>
             <MaterialCommunityIcons name="video-outline" size={48} color="rgba(255,255,255,0.5)" />
             <Text style={styles.placeholderText}>视频即将上线</Text>
-            <Text style={styles.placeholderSubtext}>我们正在录制中，敬请期待</Text>
+            <Text style={styles.placeholderSubtext}>文字步骤已展示在下方</Text>
           </View>
         )}
       </View>
 
-      {/* 信息区 */}
-      <View style={styles.infoSection}>
+      {/* 信息区 - 改为可滚动 */}
+      <ScrollView
+        style={styles.infoSection}
+        contentContainerStyle={styles.infoContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* 标签行 */}
         <View style={styles.tagRow}>
           <View style={[styles.tag, { backgroundColor: hasVideo ? '#4CAF50' : '#FF9800' }]}>
-            <Text style={styles.tagText}>{hasVideo ? '15s Demo' : '即将上线'}</Text>
+            <Text style={styles.tagText}>{hasVideo ? '15s Demo' : '图文步骤'}</Text>
           </View>
           {suggestion && (
             <View style={[styles.tag, { backgroundColor: suggestion.type === 'must_do' ? '#F44336' : '#9E9E9E' }]}>
@@ -102,12 +106,48 @@ export default function VideoScreen() {
           {videoInfo?.description || '视频正在录制中，完成后将自动上线。'}
         </Text>
 
+        {/* 操作步骤 - S5 升级：把"视频占位"补上文字步骤 */}
+        {suggestion && (() => {
+          const steps = suggestion.content.split('\n').filter(Boolean);
+          if (steps.length === 0) return null;
+          return (
+            <View style={styles.stepsCard}>
+              <View style={styles.stepsHeader}>
+                <MaterialIcons name="format-list-numbered" size={20} color={colors.primary} />
+                <Text style={styles.stepsTitle}>操作步骤</Text>
+                <Text style={styles.stepsCount}>{steps.length} 步</Text>
+              </View>
+              {steps.map((step, index) => (
+                <View key={index} style={styles.stepRow}>
+                  <View style={styles.stepNumber}>
+                    <Text style={styles.stepNumberText}>{index + 1}</Text>
+                  </View>
+                  <Text style={styles.stepText}>{step}</Text>
+                </View>
+              ))}
+            </View>
+          );
+        })()}
+
+        {/* 验收标准 - 复用 suggestion.acceptance_criteria */}
+        {suggestion?.acceptance_criteria && (
+          <View style={styles.criteriaCard}>
+            <View style={styles.criteriaIconWrap}>
+              <MaterialIcons name="check-circle" size={20} color={colors.primary} />
+            </View>
+            <View style={styles.criteriaContent}>
+              <Text style={styles.criteriaTitle}>完成标准</Text>
+              <Text style={styles.criteriaDesc}>{suggestion.acceptance_criteria}</Text>
+            </View>
+          </View>
+        )}
+
         {/* 提示信息 */}
         {!hasVideo && (
           <View style={styles.noticeCard}>
             <MaterialIcons name="info-outline" size={18} color={colors.primary} />
             <Text style={styles.noticeText}>
-              视频教程正在录制中，您可以先按照文字步骤操作。
+              视频教程正在录制中，您可按上方文字步骤操作，效果一致。
             </Text>
           </View>
         )}
@@ -134,7 +174,7 @@ export default function VideoScreen() {
             <Text style={styles.learnedText}>我已学会</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -196,9 +236,12 @@ const styles = StyleSheet.create({
   // 信息区
   infoSection: {
     flex: 1,
+    backgroundColor: colors.surface,
+  },
+  infoContent: {
     padding: spacing.pageMargin,
-    justifyContent: 'center',
-    gap: spacing.sm,
+    paddingBottom: 40,
+    gap: spacing.md,
   },
 
   // 标签
@@ -244,11 +287,97 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F5E9',
     borderRadius: radius.lg,
     padding: spacing.md,
-    marginTop: spacing.sm,
     gap: spacing.sm,
   },
   noticeText: {
     flex: 1,
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+    lineHeight: 20,
+  },
+
+  // 操作步骤卡片（S5 新增）
+  stepsCard: {
+    backgroundColor: colors.paperWhite,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    gap: spacing.sm,
+    ...shadows.card,
+  },
+  stepsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outlineVariant + '40',
+  },
+  stepsTitle: {
+    flex: 1,
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: 16,
+    color: colors.onSurface,
+  },
+  stepsCount: {
+    fontFamily: 'BeVietnamPro_500Medium',
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  stepNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primaryContainer + '60',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  stepNumberText: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: 13,
+    color: colors.primary,
+  },
+  stepText: {
+    flex: 1,
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: 14,
+    color: colors.onSurface,
+    lineHeight: 22,
+  },
+
+  // 验收标准卡片（S5 新增）
+  criteriaCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#E6F7F0',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  criteriaIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primaryContainer + '40',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  criteriaContent: {
+    flex: 1,
+    gap: 2,
+  },
+  criteriaTitle: {
+    fontFamily: 'BeVietnamPro_700Bold',
+    fontSize: 14,
+    color: colors.onSurface,
+  },
+  criteriaDesc: {
     fontFamily: 'BeVietnamPro_400Regular',
     fontSize: 13,
     color: colors.onSurfaceVariant,
@@ -260,7 +389,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
   },
   backButton: {
     flexDirection: 'row',
