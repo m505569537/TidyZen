@@ -2,10 +2,10 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { colors, typography, spacing, radius, shadows } from '../constants/theme';
+import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
 import { useState, useCallback } from 'react';
-import { getHistoryRecords } from '../services/storage';
-import type { HistoryRecord } from '../types/analysis';
+import { getHistoryRecords } from '../../services/storage';
+import type { HistoryRecord } from '../../types/analysis';
 
 const MEDALS = [
   { id: 1, icon: 'nightlight-round' as const, bg: '#F5E6CC', color: '#D4A574', unlocked: true },

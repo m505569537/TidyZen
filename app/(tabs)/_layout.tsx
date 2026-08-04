@@ -79,11 +79,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="profile"
         options={{
-          title: '设置',
+          title: '我的',
           tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon name="settings" color={color} size={size} focused={focused} />
+            <TabIcon name="person" color={color} size={size} focused={focused} />
           ),
         }}
       />

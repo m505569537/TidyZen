@@ -239,8 +239,9 @@
 
 ### 7.3 偏差：Tab 入口
 - 设计稿 4 Tab：首页/扫描/记录/我的
-- 当前实现 `app/(tabs)/_layout.tsx`：首页/扫描/记录/设置
-- 满足方法：S6 决策 + 改
+- 2026-08-02 修复（commit 见下方）
+- 当前实现 `app/(tabs)/_layout.tsx`：首页/扫描/记录/我的 ✅
+- 改动：`(tabs)/_layout.tsx` 把 `name="settings"` 改为 `name="profile"`，title `"设置"` → `"我的"`，icon `settings` → `person`；新增 `app/(tabs)/profile.tsx`（从 root `app/profile.tsx` 迁移，import 路径 `../` → `../../`）；3 处路由引用同步更新（medals / notification-preferences / settings (root)）；删除 `app/(tabs)/settings.tsx` + root `app/profile.tsx`
 
 ### 7.4 偏差：account.tsx 按钮
 - 设计稿有 5 个按钮（修改密码/退出登录/删除账号/隐私政策/用户协议）

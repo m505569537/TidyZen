@@ -284,7 +284,7 @@ export default function MedalsScreen() {
           icon="cog-outline"
           label="设置"
           active={false}
-          onPress={() => router.replace('/(tabs)/settings')}
+          onPress={() => router.replace('/(tabs)/profile')}
         />
       </View>
     </SafeAreaView>
