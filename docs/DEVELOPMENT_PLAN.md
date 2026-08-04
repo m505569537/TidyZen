@@ -3,7 +3,7 @@
 > **技术栈**: React Native (Expo) + TypeScript + Zustand
 > **设计系统**: TidyZen (Stitch 项目 12020854547316763944)
 > **AI 后端**: doubao-seed-2.0-pro 视觉模型 API（火山引擎 Ark coding endpoint，2026-08-02 切换）
-> **更新日期**: 2026-06-15
+> **更新日期**: 2026-08-04
 
 ---
 
@@ -336,4 +336,34 @@ export const spacing = { unit: 4, xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
 
 ---
 
-**下一步**: 执行 Phase 1 — 创建 Expo 项目并配置设计系统。
+## MVP 收尾进展（2026-08-04 更新）
+
+> 本节是 V2 计划与 MVP 收尾期实际完成的对照表。Phase 1-4 已在 2026-06 完成（见上方 P0-P3 路线图与 git 历史 §6），下面是 2026-08-02 起的 MVP 收尾期增量。
+
+### 已完成（2026-08-02 ~ 08-04）
+
+| 任务 | Commit | 涉及文件 | 解决验收项 |
+|---|---|---|---|
+| AI 模型切换 mimo → 豆包 | `2b769e7` | services/ai.ts, .env, 3 文档 | §7.1.2 AI 分析 |
+| S9 埋点骨架 5/6 事件 | `f31611a` | services/analytics.ts (新建) + 4 页面 | §8.1 5/6 埋点 |
+| S6 Tab 入口 4 Tab 改 首页/扫描/记录/我的 | `c25fe5c` | app/(tabs)/_layout.tsx + 3 路由引用 | §7.3 Tab 偏差 |
+| S8 account 5 按钮 + settings 3 按钮 | `26972d5` + `1f4deb5` | app/account.tsx, app/settings.tsx | §7.4 按钮（App Store Guideline 2.2） |
+| S5 video 页图文步骤 L1 | `03f11c5` | app/video/[id].tsx | §7.2.2 建议可操作性（部分） |
+| S7 文案审计报告 | `dc07aed` | docs/SUGGESTIONS_AUDIT.md (新建) | §7.2.3 文案审计 |
+
+### P0 待办（等用户输入）
+
+- S2 测试集搭建（10-15 张真实房间照片）
+- S3 准确率评估（依赖 S2）
+- S4 prompt 调优（依赖 S3）
+- S11 录制 20 条视频（依赖真人出镜，L2 升级）
+- S12 端到端验收（App Store 上架前最后一步）
+- SUGGESTIONS_AUDIT 拍板：① 不改 ② 全改 ③ 挑改 ④ 重写
+
+### 同步文档
+
+- `docs/MVP_ACCEPTANCE.md` — 审计文档，6 ✅ / 4 ⚠️ / 6 ❌
+- `docs/SUGGESTIONS_AUDIT.md` — 文案审计报告（9103 字节）
+- `docs/PROJECT_STATUS.md` — 状态总览（本文件 §5 §6 同步）
+
+**下一步**: 等用户拍 SUGGESTIONS_AUDIT 决策 + 提供测试集照片 → 重启 S2-S4 准确率闭环。

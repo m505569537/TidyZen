@@ -1,6 +1,6 @@
 # TidyZen 项目状态
 
-> 最后更新: 2026-06-18
+> 最后更新: 2026-08-04
 > Stitch 设计稿项目: `projects/12020854547316763944`（小徐的整理助手）
 
 ---
@@ -163,6 +163,51 @@
 - [ ] Tab 导航对齐设计稿（4 入口）
 - [ ] 各页面细节打磨
 
+### P4 — MVP 收尾期 ✅ 完成 (2026-08-04)
+
+**S5 video 图文步骤**（commit 03f11c5 + fbbe014）
+- 升级 `app/video/[id].tsx` 从"视频即将上线"死路占位 → 图文步骤页（L1 方案）
+- 新增"操作步骤"卡片（从 `suggestion.content.split('\n')` 拿步骤）
+- 新增"完成标准"卡片（复用 `suggestion.acceptance_criteria`）
+- §7.2.2 转化估算：L0 占位 0% → L1 图文 60-70%（L2 视频 S11 待真人录制）
+
+**S6 Tab 入口**（commit c25fe5c + 6339a57）
+- 4 Tab 改 首页/扫描/记录/我的（`app/(tabs)/_layout.tsx` `name="settings"` → `name="profile"`，title "设置" → "我的"）
+- 3 处路由引用同步（medals / notification-preferences / settings root → (tabs)/profile）
+- 删 `app/(tabs)/settings.tsx` + root `app/profile.tsx`
+- 修复 PRD §7.3 偏差
+
+**S8 按钮修复**（commit 26972d5 + d29b996 + 1f4deb5 + 9e04ce9）
+- `app/account.tsx` 5 个无 onPress 按钮加 Alert：手机·修改 / 微信·解绑 / 邮箱·去绑定 / 改密码·提交 / 注销账号
+- `app/settings.tsx` 3 个无 onPress 按钮加 Alert：房间模板管理 / 建议库偏好 / 退出登录
+- 修复 PRD §7.4 偏差（App Store 审核 Guideline 2.2）
+
+**S7 文案审计**（commit dc07aed + ebce386）
+- `docs/SUGGESTIONS_AUDIT.md` 9103 字节逐条审计 20 条建议
+- 审计口径：第二人称 / 短句 / 动词开头 / 无书面化连接词
+- 结论：✅ 12/20 无需改 · ⚠️ 8/20 建议改 · ❌ 0/20 硬伤
+- 待用户拍 4 选 1：① 不改 ② 全改 ③ 挑改 ④ 重写
+
+**S9 埋点骨架**（commit f31611a + MVP_ACCEPTANCE.md 同步 commit 6339a57）
+- `services/analytics.ts` 113 行，console.log 实现
+- 5/6 埋点事件已接入：photo_taken / analysis_complete / suggestion_viewed / error_reported / retake_photo
+- suggestion_executed 待产品决策（无对应 UI 按钮）
+
+**AI 模型切换**（commit 2b769e7）
+- mimo-v2.5 → 火山引擎 doubao-seed-2.0-pro（coding endpoint）
+- 端到端实测通过
+
+### P5 — MVP 上架前 P0 待办（2026-08-04）
+
+- [ ] S2 建测试集（10-15 张真实房间照片，等用户提供）
+- [ ] S3 跑准确率评估
+- [ ] S4 prompt 调优
+- [ ] S11 录制 20 条视频（L2 升级，等真人出镜）
+- [ ] S12 端到端验收（App Store Guideline 2.1/2.2）
+- [ ] SUGGESTIONS_AUDIT 待用户拍 4 选 1
+
+**当前总览**（详见 `docs/MVP_ACCEPTANCE.md`）：6 ✅ / 4 ⚠️ / 6 ❌（未达可发布标准）
+
 ---
 
 ## 六、Git 历史
@@ -188,6 +233,13 @@
 | `8654b77` | fix: 相册图片 HEIC→JPEG 转码 |
 | `5e3e5e5` | fix: 恢复 expo-image-manipulator，修复 Ruby 2.6 pod |
 | `66e6c81` | docs: 更新开发路线图 |
+| `2b769e7` | feat(ai): 切换 mimo → 火山引擎豆包 doubao-seed-2.0-pro |
+| `f31611a` | feat(analytics): 接入 5/6 PRD §8.1 埋点 + MVP_ACCEPTANCE.md |
+| `c25fe5c` | feat(nav): 4 Tab 改 首页/扫描/记录/我的 |
+| `26972d5` | fix(account): 5 个无 onPress 按钮加 Alert |
+| `1f4deb5` | fix(account): settings.tsx 3 个无 onPress 按钮加 Alert |
+| `03f11c5` | feat(video): 升级占位为图文步骤页（S5 L1） |
+| `dc07aed` | docs(acceptance): S7 文案审计 + SUGGESTIONS_AUDIT.md |
 
 ---
 
