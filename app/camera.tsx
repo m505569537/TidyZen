@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 
 import { useRef, useState } from 'react';
 import { colors, typography, spacing, radius } from '../constants/theme';
@@ -14,10 +15,11 @@ import { BoundingBox } from '../components';
 /**
  * Convert any image to JPEG base64 using expo-image-manipulator.
  * Handles HEIC/PNG/etc -> JPEG conversion for API compatibility.
+ * 同时把宽度缩到 1024（保持宽高比），降低上传/API 延迟。
  */
 async function toJpegBase64(uri: string): Promise<{ uri: string; base64: string }> {
   console.log('[camera] toJpegBase64: input uri=', uri);
-  const result = await manipulateAsync(uri, [], {
+  const result = await manipulateAsync(uri, [{ resize: { width: 1024 } }], {
     format: SaveFormat.JPEG,
     compress: 0.8,
     base64: true,
@@ -78,9 +80,29 @@ export default function CameraScreen() {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.8, base64: true });
       if (!photo?.uri || !photo?.base64) return;
       console.log('[camera] takePicture: base64 length=', photo.base64.length, 'prefix=', photo.base64.slice(0, 6));
-      setPhoto(photo.uri, photo.base64);
-      // 埋点：用户拍照
-      analytics.photoTaken('camera', { base64_bytes: photo.base64.length });
+      // 大图（宽 > 1024）先压缩再传 AI，降低 API 延迟；小图不放大，直接原图
+      let uri = photo.uri;
+      let base64 = photo.base64;
+      if (photo.width > 1024) {
+        try {
+          const resized = await manipulateAsync(photo.uri, [{ resize: { width: 1024 } }], {
+            format: SaveFormat.JPEG,
+            compress: 0.8,
+            base64: true,
+          });
+          if (resized.base64) {
+            uri = resized.uri;
+            base64 = resized.base64;
+          }
+        } catch (e) {
+          // 压缩失败时兜底用原图 base64，不阻塞主流程
+          console.warn('[camera] takePicture resize failed, fallback to original:', e);
+        }
+      }
+      console.log('[camera] takePicture: final base64 length=', base64.length, 'prefix=', base64.slice(0, 6));
+      setPhoto(uri, base64);
+      // 埋点：用户拍照（base64_bytes 为压缩后大小）
+      analytics.photoTaken('camera', { base64_bytes: base64.length });
       router.push('/analyzing');
     } catch (e: any) {
       console.error('[camera] takePicture failed:', e);

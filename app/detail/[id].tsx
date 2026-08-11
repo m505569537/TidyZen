@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -186,6 +186,19 @@ export default function DetailScreen() {
             icon={<MaterialIcons name="play-circle" size={22} color={colors.primary} />}
           />
         )}
+
+        {/* 标记已完成按钮（suggestion_executed 埋点 UI 入口） */}
+        <TouchableOpacity
+          style={styles.doneButton}
+          onPress={() => {
+            analytics.suggestionExecuted(suggestion.scenario_id);
+            Alert.alert('已记录，继续保持！');
+          }}
+          activeOpacity={0.8}
+        >
+          <MaterialIcons name="check-circle" size={20} color={colors.primaryDark} />
+          <Text style={styles.doneText}>标记已完成</Text>
+        </TouchableOpacity>
 
         {/* 重新扫描按钮 */}
         <TouchableOpacity
@@ -379,6 +392,25 @@ const styles = StyleSheet.create({
     fontFamily: 'BeVietnamPro_600SemiBold',
     fontSize: typography.bodyLg.fontSize,
     color: colors.onPrimary,
+  },
+
+  // 标记已完成按钮（outline 风格，与重新扫描按钮区分主次）
+  doneButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.paperWhite,
+    borderWidth: 1.5,
+    borderColor: colors.primaryDark,
+    borderRadius: radius.full,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  doneText: {
+    fontFamily: 'BeVietnamPro_600SemiBold',
+    fontSize: typography.bodyLg.fontSize,
+    color: colors.primaryDark,
   },
 
   // 找不到 suggestion 时的空状态
