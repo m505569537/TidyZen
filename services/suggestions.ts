@@ -39,7 +39,7 @@ const SUGGESTIONS_DB: Record<ScenarioId, Suggestion[]> = {
       difficulty: 'easy', time_cost: '3分钟', items_needed: [],
       room_type: ['all'], expected_effect: '视觉整洁度+40%',
       title: '椅子急救法',
-      content: '1. 穿过的衣服全部挂进衣柜（哪怕只是挂着）\n2. 干净衣服叠成方块竖放（像摆书一样）\n3. 脏衣服直接踢进洗衣篮',
+      content: '1. 穿过的衣服全部挂进衣柜（哪怕只是挂着）\n2. 干净衣服叠成方块竖放（像书架一样立着放）\n3. 脏衣服直接踢进洗衣篮',
       acceptance_criteria: '椅子和床单露出 80% 原色',
       video_id: 'S01-A01', // 视频占位符，待接入真实资源
     },
@@ -48,7 +48,7 @@ const SUGGESTIONS_DB: Record<ScenarioId, Suggestion[]> = {
       difficulty: 'easy', time_cost: '2分钟', items_needed: [],
       room_type: ['all'], expected_effect: '视觉整洁度+30%',
       title: '临时衣架墙',
-      content: '在门后贴两个挂钩（若无，用衣架挂在门把手上），常穿外套挂上去。',
+      content: '在门后贴两个挂钩挂外套；没有挂钩就把衣架挂在门把手上。',
       acceptance_criteria: '椅面无衣物覆盖',
       video_id: 'S01-A02', // 视频占位符，待接入真实资源
     },
@@ -68,7 +68,7 @@ const SUGGESTIONS_DB: Record<ScenarioId, Suggestion[]> = {
       difficulty: 'medium', time_cost: '5分钟', items_needed: ['剪刀'],
       room_type: ['all'], expected_effect: '视觉整洁度+30% + 收纳功能',
       title: '抽屉分割器',
-      content: '剪开侧面纸板，折成"田字格"放入抽屉装袜子/数据线。',
+      content: '剪开侧面纸板，折成 4 个小格子，放进抽屉装袜子/数据线。',
       acceptance_criteria: '抽屉内物品分隔整齐',
       video_id: 'S02-A02', // 视频占位符，待接入真实资源
     },
@@ -85,10 +85,10 @@ const SUGGESTIONS_DB: Record<ScenarioId, Suggestion[]> = {
     },
     {
       id: 'S03-A02', scenario_id: 'S03', type: 'optional',
-      difficulty: 'easy', time_cost: '2分钟', items_needed: ['厚字典或书×1-2'],
+      difficulty: 'easy', time_cost: '2分钟', items_needed: ['最厚的书×1-2'],
       room_type: ['all'], expected_effect: '视觉整洁度+30%',
       title: '书本护栏法',
-      content: '用厚字典将桌面物品隔在墙边，留出工作区空白。',
+      content: '用最厚的那本书把桌面物品隔在墙边，留出工作区空白。',
       acceptance_criteria: '桌面中央区域空旷',
       video_id: 'S03-A02', // 视频占位符，待接入真实资源
     },
@@ -99,7 +99,7 @@ const SUGGESTIONS_DB: Record<ScenarioId, Suggestion[]> = {
       difficulty: 'easy', time_cost: '2分钟', items_needed: [],
       room_type: ['all'], expected_effect: '视觉整洁度+50%',
       title: '踢角法',
-      content: '1. 地上东西全部踢到房间最不起眼的角落（床底/门后）\n2. 只留下必需品（如垃圾桶）',
+      content: '1. 地上东西全部挪到房间最不显眼的角落（床底/门后）\n2. 只留下必需品（如垃圾桶）',
       acceptance_criteria: '从门口到床边行走无遮挡',
       video_id: 'S04-A01', // 视频占位符，待接入真实资源
     },
@@ -127,7 +127,7 @@ const SUGGESTIONS_DB: Record<ScenarioId, Suggestion[]> = {
       id: 'S05-A02', scenario_id: 'S05', type: 'optional',
       difficulty: 'easy', time_cost: '1分钟', items_needed: [],
       room_type: ['all'], expected_effect: '视觉整洁度+30%',
-      title: '遮丑大法',
+      title: '覆盖法',
       content: '找大浴巾/床单盖住乱堆被褥，拉平四角。',
       acceptance_criteria: '床面颜色统一，无杂乱凸起',
       video_id: 'S05-A02', // 视频占位符，待接入真实资源
@@ -136,10 +136,10 @@ const SUGGESTIONS_DB: Record<ScenarioId, Suggestion[]> = {
   S06: [
     {
       id: 'S06-A01', scenario_id: 'S06', type: 'must_do',
-      difficulty: 'easy', time_cost: '3分钟', items_needed: ['长尾夹×2-3'],
+      difficulty: 'easy', time_cost: '3分钟', items_needed: ['长尾夹（燕尾夹）×2-3'],
       room_type: ['all'], expected_effect: '视觉整洁度+40%',
       title: '长尾夹理线',
-      content: '1. 找废旧长尾夹\n2. 夹在桌子边缘\n3. 多余电线卷起穿过夹子金属圈',
+      content: '1. 找废旧长尾夹\n2. 夹在桌子边缘\n3. 多余电线卷起穿过夹子后面的金属环',
       acceptance_criteria: '桌面看不到凌乱黑线团',
       video_id: 'S06-A01', // 视频占位符，待接入真实资源
     },
@@ -188,7 +188,7 @@ const SUGGESTIONS_DB: Record<ScenarioId, Suggestion[]> = {
       difficulty: 'easy', time_cost: '2分钟', items_needed: ['湿纸巾'],
       room_type: ['all'], expected_effect: '视觉整洁度+40% + 卫生改善',
       title: '清空桌面',
-      content: '用湿纸巾擦一遍桌面油渍，外卖盒全部扔掉。',
+      content: '湿纸巾擦桌面油渍；外卖盒全扔掉。',
       acceptance_criteria: '桌面无油渍、无食物包装',
       video_id: 'S08-A02', // 视频占位符，待接入真实资源
     },
@@ -207,7 +207,7 @@ const SUGGESTIONS_DB: Record<ScenarioId, Suggestion[]> = {
       id: 'S09-A02', scenario_id: 'S09', type: 'optional',
       difficulty: 'easy', time_cost: '2分钟', items_needed: ['快递纸箱×1'],
       room_type: ['all'], expected_effect: '视觉整洁度+30%',
-      title: '杂志筐替代',
+      title: '快递纸箱当书架',
       content: '快递纸箱立着放书，挡住书脊，变废为宝。',
       acceptance_criteria: '书脊不可见，纸箱外观整洁',
       video_id: 'S09-A02', // 视频占位符，待接入真实资源
