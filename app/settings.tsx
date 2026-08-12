@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -103,7 +103,11 @@ export default function SettingsScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <TouchableOpacity style={styles.userCard} activeOpacity={0.7} onPress={() => router.push('/(tabs)/profile')}>
           <View style={styles.avatar}>
-            <MaterialIcons name="person" size={28} color={colors.onPrimary} />
+            {profile?.avatarUri ? (
+              <Image source={{ uri: profile.avatarUri }} style={styles.avatarImg} />
+            ) : (
+              <MaterialIcons name="person" size={28} color={colors.onPrimary} />
+            )}
           </View>
           <View style={styles.userInfo}>
             <Text style={styles.nickname}>{displayName}</Text>
@@ -196,7 +200,8 @@ const styles = StyleSheet.create({
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   title: { fontFamily: 'BeVietnamPro_700Bold', fontSize: 20, color: colors.onSurface },
   userCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F0FAF5', borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.lg, ...shadows.card },
-  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.primary, borderWidth: 1, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.primary, borderWidth: 1, borderColor: colors.primary, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarImg: { width: 60, height: 60, borderRadius: 30 },
   userInfo: { flex: 1, marginLeft: spacing.md },
   nickname: { fontFamily: 'BeVietnamPro_700Bold', fontSize: 16, color: colors.primary, marginBottom: 4 },
   levelTag: { alignSelf: 'flex-start', backgroundColor: colors.primaryContainer, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.primary + '40', paddingHorizontal: 8, paddingVertical: 2 },

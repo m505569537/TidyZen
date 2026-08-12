@@ -1,10 +1,12 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
 import { useState, useCallback } from 'react';
-import { getHistoryRecords, getProfile } from '../../services/storage';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+import { getHistoryRecords, getProfile, saveProfile } from '../../services/storage';
 import type { HistoryRecord } from '../../types/analysis';
 import { deriveLevel, deriveLevelProgress, deriveTitle } from '../../utils/level';
 
@@ -73,6 +75,7 @@ function computeStats(records: HistoryRecord[]): UserStats {
 export default function ProfileScreen() {
   const [nickname, setNickname] = useState('整洁爱好者');
   const [gender, setGender] = useState<'male' | 'female' | 'secret'>('secret');
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [stats, setStats] = useState<UserStats>(EMPTY_STATS);
 
   // 页面聚焦时刷新资料 + 统计数据
@@ -84,6 +87,7 @@ export default function ProfileScreen() {
         if (cancelled) return;
         setNickname(profile.nickname);
         setGender(profile.gender);
+        setAvatarUri(profile.avatarUri ?? null);
         setStats(computeStats(records));
       })();
       return () => {
@@ -96,6 +100,42 @@ export default function ProfileScreen() {
   const levelProgress = deriveLevelProgress(stats.totalScans);
   const title = deriveTitle(stats.totalScans);
 
+  const pickAvatar = useCallback(async () => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert('需要权限', '请在系统设置中允许访问相册以更换头像');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+      if (result.canceled || !result.assets?.[0]) return;
+      const srcUri = result.assets[0].uri;
+      const destUri = `${FileSystem.documentDirectory ?? ''}avatar.jpg`;
+      if (destUri) {
+        await FileSystem.copyAsync({ from: srcUri, to: destUri });
+        setAvatarUri(destUri);
+      } else {
+        setAvatarUri(srcUri);
+      }
+    } catch (e) {
+      Alert.alert('更换失败', e instanceof Error ? e.message : '未知错误');
+    }
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    try {
+      await saveProfile({ nickname, gender, avatarUri });
+      Alert.alert('已保存', '个人资料已更新');
+    } catch (e) {
+      Alert.alert('保存失败', e instanceof Error ? e.message : '未知错误');
+    }
+  }, [nickname, gender, avatarUri]);
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -103,22 +143,26 @@ export default function ProfileScreen() {
           <MaterialIcons name='arrow-back' size={24} color={colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.title}>{'个人资料'}</Text>
-        <TouchableOpacity style={styles.backBtn} onPress={() => Alert.alert('功能开发中', '「顶部保存」功能正在开发中，预计 v1.1 上线。') }>
+        <TouchableOpacity style={styles.backBtn} onPress={handleSave} disabled={false}>
           <Text style={styles.saveText}>{'保存'}</Text>
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.avatarSection}>
+        <TouchableOpacity style={styles.avatarSection} activeOpacity={0.7} onPress={pickAvatar}>
           <View style={styles.avatarWrap}>
             <View style={styles.avatar}>
-              <MaterialIcons name='person' size={48} color={colors.primary} />
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={styles.avatarImg} />
+              ) : (
+                <MaterialIcons name='person' size={48} color={colors.primary} />
+              )}
             </View>
             <View style={styles.cameraBtn}>
               <MaterialIcons name='camera-alt' size={18} color={colors.paperWhite} />
             </View>
           </View>
           <Text style={styles.avatarHint}>{'点击更换头像'}</Text>
-        </View>
+        </TouchableOpacity>
         <View style={styles.levelRow}>
           <View style={styles.levelCard}>
             <View style={styles.levelCardContent}>
@@ -213,7 +257,7 @@ export default function ProfileScreen() {
             ))}
           </ScrollView>
         </View>
-        <TouchableOpacity style={styles.saveBtn} activeOpacity={0.8} onPress={() => Alert.alert('功能开发中', '「底部保存」功能正在开发中，预计 v1.1 上线。') }>
+        <TouchableOpacity style={styles.saveBtn} activeOpacity={0.8} onPress={handleSave}>
           <Text style={styles.saveBtnText}>{'保存'}</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -230,7 +274,8 @@ const styles = StyleSheet.create({
   saveText: { fontFamily: 'BeVietnamPro_600SemiBold', fontSize: 16, color: colors.primary },
   avatarSection: { alignItems: 'center', paddingVertical: spacing.lg },
   avatarWrap: { position: 'relative', marginBottom: spacing.sm },
-  avatar: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#8FB5A5', alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#8FB5A5', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarImg: { width: 120, height: 120, borderRadius: 60 },
   cameraBtn: { position: 'absolute', bottom: 0, right: 0, width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: colors.surface },
   avatarHint: { fontFamily: 'BeVietnamPro_400Regular', fontSize: 14, color: colors.primary, marginTop: spacing.xs },
   levelRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
