@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -136,10 +136,10 @@ export default function SuggestionPreferencesScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>建议库偏好</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerIconBtn}>
+          <TouchableOpacity style={styles.headerIconBtn} onPress={() => Alert.alert('功能开发中', '「搜索」功能正在开发中，预计 v1.1 上线。') }>
             <MaterialIcons name="search" size={24} color="#333333" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIconBtn}>
+          <TouchableOpacity style={styles.headerIconBtn} onPress={() => Alert.alert('功能开发中', '「头像」功能正在开发中，预计 v1.1 上线。') }>
             <MaterialIcons name="person-outline" size={24} color="#333333" />
           </TouchableOpacity>
         </View>

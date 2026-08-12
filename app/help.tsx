@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -66,10 +66,10 @@ export default function HelpScreen() {
           <View style={styles.helpIconWrap}><MaterialIcons name='headset-mic' size={28} color={colors.primary} /></View>
           <Text style={styles.helpTitle}>{'仍有疑问？'}</Text>
           <Text style={styles.helpDesc}>{'我们的客服团队随时为您提供支持，或者您可以向我们反馈产品建议。'}</Text>
-          <TouchableOpacity style={styles.helpBtnPrimary} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.helpBtnPrimary} activeOpacity={0.8} onPress={() => Alert.alert('功能开发中', '「联系客服」功能正在开发中，预计 v1.1 上线。') }>
             <Text style={styles.helpBtnPrimaryText}>{'在线联系客服'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.helpBtnSecondary} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.helpBtnSecondary} activeOpacity={0.8} onPress={() => Alert.alert('功能开发中', '「反馈」功能正在开发中，预计 v1.1 上线。') }>
             <Text style={styles.helpBtnSecondaryText}>{'反馈建议'}</Text>
           </TouchableOpacity>
         </View>

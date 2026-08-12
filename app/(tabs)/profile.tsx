@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -104,7 +104,7 @@ export default function ProfileScreen() {
           <MaterialIcons name='arrow-back' size={24} color={colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.title}>{'个人资料'}</Text>
-        <TouchableOpacity style={styles.backBtn}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => Alert.alert('功能开发中', '「顶部保存」功能正在开发中，预计 v1.1 上线。') }>
           <Text style={styles.saveText}>{'保存'}</Text>
         </TouchableOpacity>
       </View>
@@ -214,7 +214,7 @@ export default function ProfileScreen() {
             ))}
           </ScrollView>
         </View>
-        <TouchableOpacity style={styles.saveBtn} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.saveBtn} activeOpacity={0.8} onPress={() => Alert.alert('功能开发中', '「底部保存」功能正在开发中，预计 v1.1 上线。') }>
           <Text style={styles.saveBtnText}>{'保存'}</Text>
         </TouchableOpacity>
       </ScrollView>

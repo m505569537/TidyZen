@@ -59,7 +59,7 @@ export default function SettingsScreen() {
         <Text style={styles.groupTitle}>账号与安全</Text>
         <View style={styles.groupCard}>
           <SettingItem icon="person" label="个人资料" onPress={() => router.push('/(tabs)/profile')} />
-          <SettingItem icon="link" label="账号绑定" right={
+          <SettingItem icon="link" label="账号绑定" onPress={() => Alert.alert('功能开发中', '「账号绑定」功能正在开发中，预计 v1.1 上线。')} right={
             <View style={styles.rightRow}>
               <Text style={styles.hintText}>已绑定微信</Text>
               <MaterialIcons name="chevron-right" size={22} color={colors.outline} />

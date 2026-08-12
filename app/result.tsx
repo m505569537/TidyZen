@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -87,7 +87,7 @@ export default function ResultScreen() {
               {result.score}
             </Text>
           </View>
-          <TouchableOpacity style={styles.infoBtn}>
+          <TouchableOpacity style={styles.infoBtn} onPress={() => Alert.alert('功能开发中', '「info」功能正在开发中，预计 v1.1 上线。') }>
             <MaterialIcons name="info-outline" size={22} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
         </View>

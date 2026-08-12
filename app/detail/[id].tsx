@@ -64,7 +64,7 @@ export default function DetailScreen() {
           <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>分析详情</Text>
-        <TouchableOpacity style={styles.backBtn}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => Alert.alert('功能开发中', '「info」功能正在开发中，预计 v1.1 上线。') }>
           <MaterialIcons name="info-outline" size={24} color={colors.onSurface} />
         </TouchableOpacity>
       </View>

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -59,7 +59,7 @@ export default function AboutScreen() {
         </View>
         <Text style={styles.linksSectionTitle}>{'官方链接与资源'}</Text>
         {LINKS.map((link, i) => (
-          <TouchableOpacity key={i} style={styles.linkCard} activeOpacity={0.6}>
+          <TouchableOpacity key={i} style={styles.linkCard} activeOpacity={0.6} onPress={() => Alert.alert('功能开发中', '「链接」功能正在开发中，预计 v1.1 上线。') }>
             <MaterialIcons name={link.icon} size={22} color={colors.onSurfaceVariant} />
             <Text style={styles.linkLabel}>{link.label}</Text>
             <MaterialIcons name='chevron-right' size={22} color={colors.outline} />

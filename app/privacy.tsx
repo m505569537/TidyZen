@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -210,7 +210,7 @@ export default function PrivacyScreen() {
             <Text style={styles.contactDesc}>
               如需了解更多隐私政策细节或行使您的数据权利，请联系我们的法务团队。
             </Text>
-            <TouchableOpacity style={styles.contactButton} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.contactButton} activeOpacity={0.8} onPress={() => Alert.alert('功能开发中', '「联系法务」功能正在开发中，预计 v1.1 上线。') }>
               <Text style={styles.contactButtonText}>联系法务团队</Text>
               <MaterialIcons name="chevron-right" size={18} color={colors.primary} />
             </TouchableOpacity>
@@ -222,7 +222,7 @@ export default function PrivacyScreen() {
       </ScrollView>
 
       {/* 悬浮按钮 */}
-      <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.fab} activeOpacity={0.8} onPress={() => Alert.alert('功能开发中', '「悬浮客服」功能正在开发中，预计 v1.1 上线。') }>
         <MaterialIcons name="chat-bubble" size={24} color={colors.paperWhite} />
       </TouchableOpacity>
     </View>

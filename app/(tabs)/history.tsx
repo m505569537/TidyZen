@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -27,7 +27,7 @@ export default function HistoryScreen() {
       {/* 顶部导航栏：深绿背景 */}
       <View style={styles.navbar}>
         {/* 左侧汉堡菜单 */}
-        <TouchableOpacity style={styles.navIconBtn}>
+        <TouchableOpacity style={styles.navIconBtn} onPress={() => Alert.alert('功能开发中', '「汉堡」功能正在开发中，预计 v1.1 上线。') }>
           <MaterialIcons name="menu" size={24} color={colors.onPrimary} />
         </TouchableOpacity>
 
@@ -36,10 +36,10 @@ export default function HistoryScreen() {
 
         {/* 右侧：筛选图标 + 圆形头像 */}
         <View style={styles.navRight}>
-          <TouchableOpacity style={styles.navIconBtn}>
+          <TouchableOpacity style={styles.navIconBtn} onPress={() => Alert.alert('功能开发中', '「筛选」功能正在开发中，预计 v1.1 上线。') }>
             <MaterialIcons name="filter-list" size={22} color={colors.onPrimary} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.avatarBtn}>
+          <TouchableOpacity style={styles.avatarBtn} onPress={() => Alert.alert('功能开发中', '「头像」功能正在开发中，预计 v1.1 上线。') }>
             <MaterialIcons name="person" size={20} color={colors.onPrimary} />
           </TouchableOpacity>
         </View>

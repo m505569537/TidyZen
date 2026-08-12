@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -217,7 +217,7 @@ export default function RecordDetailScreen() {
         </View>
 
         {/* ── 9. 底部分享按钮 ── */}
-        <TouchableOpacity style={styles.shareBtn} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.shareBtn} activeOpacity={0.8} onPress={() => Alert.alert('功能开发中', '「分享」功能正在开发中，预计 v1.1 上线。') }>
           <MaterialIcons name="share" size={20} color={colors.onPrimary} />
           <Text style={styles.shareText}>分享清理成果</Text>
         </TouchableOpacity>

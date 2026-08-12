@@ -245,7 +245,7 @@ export default function CameraScreen() {
             </TouchableOpacity>
 
             {/* 右侧闪光灯按钮 */}
-            <TouchableOpacity style={styles.sideButton}>
+            <TouchableOpacity style={styles.sideButton} onPress={() => Alert.alert('功能开发中', '「闪光灯」功能正在开发中，预计 v1.1 上线。') }>
               <MaterialIcons name="flash-auto" size={24} color={colors.onSurface} />
             </TouchableOpacity>
           </View>
