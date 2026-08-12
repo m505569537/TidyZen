@@ -1,8 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useCallback, useState } from 'react';
+import * as FileSystem from 'expo-file-system/legacy';
 import { colors, typography, spacing, radius, shadows } from '../constants/theme';
+import { getProfile, getHistoryRecords, type UserProfile } from '../services/storage';
+import { deriveLevelTag } from '../utils/level';
 
 interface SettingItemProps {
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -30,7 +34,61 @@ function SettingItem({ icon, label, subtitle, right, onPress, iconBg, iconColor,
   );
 }
 
+/** 递归遍历目录累加文件大小（深度受限防爆栈） */
+async function dirSize(uri: string, depth: number = 0, maxDepth: number = 3): Promise<number> {
+  if (depth > maxDepth) return 0;
+  const info = await FileSystem.getInfoAsync(uri);
+  if (!info.exists) return 0;
+  if (!info.isDirectory) return info.size ?? 0;
+  const entries = await FileSystem.readDirectoryAsync(uri);
+  let total = 0;
+  for (const name of entries) {
+    const childUri = uri.endsWith('/') ? `${uri}${name}` : `${uri}/${name}`;
+    total += await dirSize(childUri, depth + 1, maxDepth);
+  }
+  return total;
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+}
+
 export default function SettingsScreen() {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [totalScans, setTotalScans] = useState(0);
+  const [cacheSizeLabel, setCacheSizeLabel] = useState('计算中…');
+
+  // 页面聚焦时刷新：资料 + 扫描数 + 缓存大小
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        const [p, records] = await Promise.all([getProfile(), getHistoryRecords()]);
+        if (cancelled) return;
+        setProfile(p);
+        setTotalScans(records.length);
+        // 异步算缓存（不阻塞 UI）
+        if (FileSystem.cacheDirectory) {
+          dirSize(FileSystem.cacheDirectory).then((bytes) => {
+            if (!cancelled) setCacheSizeLabel(formatSize(bytes));
+          }).catch(() => {
+            if (!cancelled) setCacheSizeLabel('无法计算');
+          });
+        } else {
+          setCacheSizeLabel('不可用');
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
+
+  const displayName = profile?.nickname ?? '整洁爱好者';
+  const levelTag = deriveLevelTag(totalScans);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -48,9 +106,9 @@ export default function SettingsScreen() {
             <MaterialIcons name="person" size={28} color={colors.onPrimary} />
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.nickname}>整洁爱好者</Text>
+            <Text style={styles.nickname}>{displayName}</Text>
             <View style={styles.levelTag}>
-              <Text style={styles.levelText}>☆ Lv.3 整理达人</Text>
+              <Text style={styles.levelText}>{levelTag}</Text>
             </View>
           </View>
           <MaterialIcons name="edit" size={20} color={colors.primary} />
@@ -92,7 +150,7 @@ export default function SettingsScreen() {
             onPress={() => router.push('/notification-preferences')}
           />
           <SettingItem icon="delete-sweep" label="清除本地照片缓存" subtitle="已开启隐私保护" showArrow={false}
-            right={<Text style={styles.cacheSize}>124 MB</Text>}
+            right={<Text style={styles.cacheSize}>{cacheSizeLabel}</Text>}
           />
           <SettingItem icon="shield" label="隐私政策" onPress={() => router.push('/privacy')} />
         </View>

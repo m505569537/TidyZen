@@ -7,6 +7,48 @@ import type { HistoryRecord } from '../types/analysis';
 const HISTORY_KEY = '@tidyzen/history';
 const SETTINGS_KEY = '@tidyzen/settings';
 const LAST_SCAN_KEY = '@tidyzen/lastScan';
+const PROFILE_KEY = '@tidyzen/profile';
+
+/** 用户资料（昵称 / 性别 / 头像） */
+export interface UserProfile {
+  nickname: string;
+  gender: 'male' | 'female' | 'secret';
+  avatarUri?: string | null;
+}
+
+const DEFAULT_PROFILE: UserProfile = {
+  nickname: '整洁爱好者',
+  gender: 'secret',
+  avatarUri: null,
+};
+
+/** 读用户资料（缺字段时回退默认） */
+export async function getProfile(): Promise<UserProfile> {
+  const raw = await AsyncStorage.getItem(PROFILE_KEY);
+  if (!raw) return { ...DEFAULT_PROFILE };
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      nickname: typeof parsed.nickname === 'string' && parsed.nickname.trim() ? parsed.nickname : DEFAULT_PROFILE.nickname,
+      gender: ['male', 'female', 'secret'].includes(parsed.gender) ? parsed.gender : DEFAULT_PROFILE.gender,
+      avatarUri: parsed.avatarUri ?? null,
+    };
+  } catch {
+    return { ...DEFAULT_PROFILE };
+  }
+}
+
+/** 写用户资料（merge，未提供字段保留旧值） */
+export async function saveProfile(partial: Partial<UserProfile>): Promise<UserProfile> {
+  const current = await getProfile();
+  const next: UserProfile = {
+    ...current,
+    ...partial,
+    nickname: partial.nickname !== undefined ? partial.nickname.trim() || current.nickname : current.nickname,
+  };
+  await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(next));
+  return next;
+}
 
 /** 保存历史记录 */
 export async function saveHistoryRecord(record: HistoryRecord): Promise<void> {
@@ -35,9 +77,9 @@ export async function clearHistory(): Promise<void> {
   await AsyncStorage.removeItem(HISTORY_KEY);
 }
 
-/** 清除所有本地数据（历史 + 设置 + 上次扫描），用于退出登录 */
+/** 清除所有本地数据（历史 + 设置 + 上次扫描 + 资料），用于退出登录 */
 export async function clearAllData(): Promise<void> {
-  await AsyncStorage.multiRemove([HISTORY_KEY, SETTINGS_KEY, LAST_SCAN_KEY]);
+  await AsyncStorage.multiRemove([HISTORY_KEY, SETTINGS_KEY, LAST_SCAN_KEY, PROFILE_KEY]);
 }
 
 /** 保存设置 */

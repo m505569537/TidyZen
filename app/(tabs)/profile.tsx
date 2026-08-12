@@ -4,8 +4,9 @@ import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
 import { useState, useCallback } from 'react';
-import { getHistoryRecords } from '../../services/storage';
+import { getHistoryRecords, getProfile } from '../../services/storage';
 import type { HistoryRecord } from '../../types/analysis';
+import { deriveLevel, deriveLevelProgress, deriveTitle } from '../../utils/level';
 
 const MEDALS = [
   { id: 1, icon: 'nightlight-round' as const, bg: '#F5E6CC', color: '#D4A574', unlocked: true },
@@ -67,24 +68,22 @@ function computeStats(records: HistoryRecord[]): UserStats {
   };
 }
 
-/** 等级公式：每 5 次扫描升 1 级，最少 Lv.1，最多 Lv.99 */
-function deriveLevel(scans: number): number {
-  if (scans <= 0) return 1;
-  return Math.max(1, Math.min(99, Math.floor(scans / 5) + 1));
-}
+/** 等级公式：每 5 次扫描升 1 级，最少 Lv.1，最多 Lv.99（已抽到 utils/level.ts） */
 
 export default function ProfileScreen() {
-  const [nickname, setNickname] = useState('陈洁');
-  const [gender, setGender] = useState<'male' | 'female' | 'secret'>('male');
+  const [nickname, setNickname] = useState('整洁爱好者');
+  const [gender, setGender] = useState<'male' | 'female' | 'secret'>('secret');
   const [stats, setStats] = useState<UserStats>(EMPTY_STATS);
 
-  // 页面聚焦时刷新统计数据
+  // 页面聚焦时刷新资料 + 统计数据
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       (async () => {
-        const records = await getHistoryRecords();
+        const [profile, records] = await Promise.all([getProfile(), getHistoryRecords()]);
         if (cancelled) return;
+        setNickname(profile.nickname);
+        setGender(profile.gender);
         setStats(computeStats(records));
       })();
       return () => {
@@ -94,8 +93,8 @@ export default function ProfileScreen() {
   );
 
   const level = deriveLevel(stats.totalScans);
-  // 当前等级的进度：在本级内的扫描数 / 5
-  const levelProgress = stats.totalScans > 0 ? (stats.totalScans % 5) / 5 : 0;
+  const levelProgress = deriveLevelProgress(stats.totalScans);
+  const title = deriveTitle(stats.totalScans);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -138,7 +137,7 @@ export default function ProfileScreen() {
           <View style={styles.titleCard}>
             <MaterialIcons name='military-tech' size={28} color='#B2DFDB' />
             <Text style={styles.titleLabel}>{'当前称号'}</Text>
-            <Text style={styles.titleName}>{'极简主义新星'}</Text>
+            <Text style={styles.titleName}>{title}</Text>
           </View>
         </View>
 
