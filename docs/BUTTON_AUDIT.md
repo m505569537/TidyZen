@@ -28,28 +28,30 @@
 
 **判定标准**：`<TouchableOpacity>` / `<Pressable>` 节点**完全没有 onPress**（既不路由、不弹 Alert、不 setState、不调函数）。
 
-| # | 文件:行 | 元素 | 用户预期 | 建议修法 |
-|---|---|---|---|---|
-| 1 | `app/(tabs)/index.tsx:207` | 核心功能卡片"操作"按钮 | 进入对应功能 | 跳 `/scan` 或按 buttonVariant 路由 |
-| 2 | `app/(tabs)/index.tsx:283` | "查看全部" 链接 | 展开全部卡片 | 跳 `/trends` 或弹 Modal 列表 |
-| 3 | `app/(tabs)/history.tsx:30` | 汉堡菜单 | 打开侧边栏 | 跳 `/settings` 或临时弹 Modal |
-| 4 | `app/(tabs)/history.tsx:39` | 筛选图标 | 弹出筛选 | 已实现 SegmentedControl，icon 跳转可加或删 |
-| 5 | `app/(tabs)/history.tsx:42` | 头像 | 跳"我的" | `router.push('/(tabs)/profile')` |
-| 6 | `app/(tabs)/profile.tsx:107` | 顶部"保存" | 保存昵称/性别 | `onPress={handleSave}` |
-| 7 | `app/(tabs)/profile.tsx:117` | 头像相机 | 换头像 | `expo-image-picker` + AsyncStorage 存 URI |
-| 8 | `app/(tabs)/profile.tsx:217` | 底部"保存" | 保存表单 | 同 #6 |
-| 9 | `app/about.tsx:62` | 官方链接卡片 | 跳官网/邮件 | 4 个链接 → 4 个 `Linking.openURL` |
-| 10 | `app/camera.tsx:248` | 闪光灯 | 切换 flash mode | 接 CameraView flash prop + toggle state |
-| 11 | `app/detail/[id].tsx:67` | 右上角 info | 显示建议元信息 | 弹 Modal 显示 suggestion 数据 |
-| 12 | `app/help.tsx:69` | "在线联系客服" | 联系客服 | `Linking.openURL('mailto:support@...')` |
-| 13 | `app/help.tsx:72` | "反馈建议" | 反馈 | `Linking.openURL('mailto:feedback@...')` |
-| 14 | `app/privacy.tsx:213` | "联系法务团队" | 联系法务 | `Linking.openURL('mailto:legal@...')` |
-| 15 | `app/privacy.tsx:225` | 悬浮客服按钮 | 客服 | 同 #12 |
-| 16 | `app/record/[id].tsx:220` | "分享清理成果" | 分享 | `Share.share()` API |
-| 17 | `app/result.tsx:90` | 右上角 info | 显示置信度说明 | 弹 Modal 解释置信度分级 |
-| 18 | `app/suggestion-preferences.tsx:139` | 搜索图标 | 搜建议 | 弹搜索 Modal / 跳搜索页 |
-| 19 | `app/suggestion-preferences.tsx:142` | 头像 | 跳"我的" | `router.push('/(tabs)/profile')` |
-| 20 | `app/settings.tsx:62` | "账号绑定" 整行 | 跳账号绑定 | 弹 Alert / 跳 `/account` |
+**P0.1 修复状态（2026-08-12，commit e741740）**：18/20 已加 `onPress={Alert.alert('功能开发中'...)}` 兜底。2 个误判：#7（profile.tsx 头像相机不是按钮，整个区块是装饰 View）和审计把 settings.tsx SettingItem 组件误计为 TouchableOpacity（实际补了 Alert）— 已在 commit 修正。
+
+| # | 文件:行 | 元素 | 用户预期 | 建议修法 | P0.1 状态 |
+|---|---|---|---|---|---|
+| 1 | `app/(tabs)/index.tsx:207` | 核心功能卡片"操作"按钮 | 进入对应功能 | 跳 `/scan` 或按 buttonVariant 路由 | ✅ Alert |
+| 2 | `app/(tabs)/index.tsx:283` | "查看全部" 链接 | 展开全部卡片 | 跳 `/trends` 或弹 Modal 列表 | ✅ Alert |
+| 3 | `app/(tabs)/history.tsx:30` | 汉堡菜单 | 打开侧边栏 | 跳 `/settings` 或临时弹 Modal | ✅ Alert |
+| 4 | `app/(tabs)/history.tsx:39` | 筛选图标 | 弹出筛选 | 已实现 SegmentedControl，icon 跳转可加或删 | ✅ Alert |
+| 5 | `app/(tabs)/history.tsx:42` | 头像 | 跳"我的" | `router.push('/(tabs)/profile')` | ✅ Alert（计划 P1.3 改真实跳转） |
+| 6 | `app/(tabs)/profile.tsx:107` | 顶部"保存" | 保存昵称/性别 | `onPress={handleSave}` | ✅ Alert（计划 P1.2 改真实保存） |
+| 7 | `app/(tabs)/profile.tsx:117` | 头像相机（**误判**）| 换头像 | `expo-image-picker` + AsyncStorage 存 URI | ❌ 不是按钮，整个区块是装饰 View，等 P1.2 头像功能 |
+| 8 | `app/(tabs)/profile.tsx:217` | 底部"保存" | 保存表单 | 同 #6 | ✅ Alert（计划 P1.2 改真实保存） |
+| 9 | `app/about.tsx:62` | 官方链接卡片 | 跳官网/邮件 | 4 个链接 → 4 个 `Linking.openURL` | ✅ Alert（计划 P1.3 改真实跳转） |
+| 10 | `app/camera.tsx:248` | 闪光灯 | 切换 flash mode | 接 CameraView flash prop + toggle state | ✅ Alert（计划 P1.3 改真实） |
+| 11 | `app/detail/[id].tsx:67` | 右上角 info | 显示建议元信息 | 弹 Modal 显示 suggestion 数据 | ✅ Alert |
+| 12 | `app/help.tsx:69` | "在线联系客服" | 联系客服 | `Linking.openURL('mailto:support@...')` | ✅ Alert（计划 P1.3 改 mailto） |
+| 13 | `app/help.tsx:72` | "反馈建议" | 反馈 | `Linking.openURL('mailto:feedback@...')` | ✅ Alert（计划 P1.3 改 mailto） |
+| 14 | `app/privacy.tsx:213` | "联系法务团队" | 联系法务 | `Linking.openURL('mailto:legal@...')` | ✅ Alert（计划 P1.3 改 mailto） |
+| 15 | `app/privacy.tsx:225` | 悬浮客服按钮 | 客服 | 同 #12 | ✅ Alert（计划 P1.3 改 mailto） |
+| 16 | `app/record/[id].tsx:220` | "分享清理成果" | 分享 | `Share.share()` API | ✅ Alert（计划 P1.3 改 Share） |
+| 17 | `app/result.tsx:90` | 右上角 info | 显示置信度说明 | 弹 Modal 解释置信度分级 | ✅ Alert |
+| 18 | `app/suggestion-preferences.tsx:139` | 搜索图标 | 搜建议 | 弹搜索 Modal / 跳搜索页 | ✅ Alert |
+| 19 | `app/suggestion-preferences.tsx:142` | 头像 | 跳"我的" | `router.push('/(tabs)/profile')` | ✅ Alert（计划 P1.3 改真实跳转） |
+| 20 | `app/settings.tsx:62` | "账号绑定" 整行（SettingItem 缺 onPress） | 跳账号绑定 | 弹 Alert / 跳 `/account` | ✅ Alert（后端支持时再跳 /account） |
 
 ### 修复路径（两选一）
 
