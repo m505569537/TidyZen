@@ -117,14 +117,10 @@ P3 含外部依赖项，按用户时间灵活安排
 - 提交：1 个 commit `feat(settings): 退出登录清 store/storage（不再只弹"开发中"）`
 
 **导航孤岛（30 分钟）** — `/change-password` + `/terms`：
-- **`/change-password` 修正**：不是"account 已集成"——实际 `account.tsx` L73-143 内嵌完整改密码表单（3 输入框 + 4 校验），同时 `change-password.tsx` 246 行独立页也存在，两套并存。决策：
-  - A 删独立页（account 内嵌版已够用，少维护一份代码）
-  - B account "修改密码"卡片跳独立页（避免重复逻辑，但多 1 个 router.push）
-  - C 保留两个（浪费但不动）
+- **`/change-password` 已拍 A（2026-08-12，commit d3facec）**：删独立页 + _layout 注册。**已完成**。account.tsx 内嵌版（3 输入框 + 4 校验）保留。
 - `/terms`：在 settings 隐私政策下加一行 "→ 服务条款" 跳转
-- **需用户拍板**：A/B/C？
 - 工具：1 个 CC 会话
-- 提交：1 个 commit（`fix(nav): 补 /terms 入口` 或 `chore: 删 /change-password 孤儿页`）
+- 提交：1 个 commit `fix(nav): 补 /terms 入口`
 
 ### P1.5 主页 + history 死按钮（半天，4 小时）
 
@@ -241,9 +237,9 @@ Day 3+ ：P3 按时间灵活挑
 
 ---
 
-## 6. 决策点（需要用户拍板）
+## 6. 决策点（需用户拍板）
 
-1. **P1.4 导航孤岛**：`/change-password` 删还是补入口？
+1. **✅ P1.4 导航孤岛 `/change-password`**：A 删独立页（commit d3facec 已完成）
 2. **P1.1 昵称默认**：用户没设过时显示 "整洁爱好者"（settings.tsx 现用）还是 "陈洁"（profile.tsx 现用）？建议统一为前者。
 3. **P1.3 死按钮方案 1 vs 2**：P0 已做方案 1 批量 Alert，P1.3 要不要继续做方案 2 的 8 个高 ROI 实现？
 4. **Phase 顺序**：按推荐 P0→P1→P2 走，还是有别的优先级？
