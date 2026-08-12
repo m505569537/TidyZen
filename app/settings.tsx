@@ -74,12 +74,12 @@ export default function SettingsScreen() {
             icon="home"
             label="房间模板管理"
             subtitle="租房、宿舍、卧室"
-            onPress={() => Alert.alert('功能开发中', '房间模板管理功能正在开发中，预计 v1.1 上线。\n\n届时可按「租房/宿舍/卧室」等场景快速加载预设参数。')}
+            onPress={() => router.push('/room-templates')}
           />
           <SettingItem
             icon="tune"
             label="建议库偏好"
-            onPress={() => Alert.alert('功能开发中', '建议库偏好功能正在开发中，预计 v1.1 上线。\n\n届时可按个人偏好开关不同场景的「必做/可选」建议类型。')}
+            onPress={() => router.push('/suggestion-preferences')}
           />
         </View>
 
