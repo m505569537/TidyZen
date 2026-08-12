@@ -117,9 +117,12 @@ P3 含外部依赖项，按用户时间灵活安排
 - 提交：1 个 commit `feat(settings): 退出登录清 store/storage（不再只弹"开发中"）`
 
 **导航孤岛（30 分钟）** — `/change-password` + `/terms`：
-- `/change-password`：方案 A 删文件（account.tsx 已集成修改密码表单）；方案 B 在 account.tsx 加跳转按钮
+- **`/change-password` 修正**：不是"account 已集成"——实际 `account.tsx` L73-143 内嵌完整改密码表单（3 输入框 + 4 校验），同时 `change-password.tsx` 246 行独立页也存在，两套并存。决策：
+  - A 删独立页（account 内嵌版已够用，少维护一份代码）
+  - B account "修改密码"卡片跳独立页（避免重复逻辑，但多 1 个 router.push）
+  - C 保留两个（浪费但不动）
 - `/terms`：在 settings 隐私政策下加一行 "→ 服务条款" 跳转
-- **需用户拍板**：A 还是 B？
+- **需用户拍板**：A/B/C？
 - 工具：1 个 CC 会话
 - 提交：1 个 commit（`fix(nav): 补 /terms 入口` 或 `chore: 删 /change-password 孤儿页`）
 
