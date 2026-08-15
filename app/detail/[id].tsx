@@ -64,8 +64,7 @@ export default function DetailScreen() {
           <MaterialIcons name="arrow-back" size={24} color={colors.onSurface} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>分析详情</Text>
-        <TouchableOpacity style={styles.backBtn} onPress={() => Alert.alert('功能开发中', '「info」功能正在开发中，预计 v1.1 上线。') }>
-          <MaterialIcons name="info-outline" size={24} color={colors.onSurface} />
+        <TouchableOpacity style={styles.backBtn} onPress={() => Alert.alert('关于分析详情', '详情页展示了 AI 视觉分析识别的物品类别、空间占比与整理建议。\n\n每条建议的优先级由「频次 × 杂乱度」综合决定。\n\n点击条目可查看完整建议或标记为已处理。') }>
         </TouchableOpacity>
       </View>
 

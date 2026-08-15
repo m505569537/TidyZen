@@ -136,10 +136,10 @@ export default function SuggestionPreferencesScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>建议库偏好</Text>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerIconBtn} onPress={() => Alert.alert('功能开发中', '「搜索」功能正在开发中，预计 v1.1 上线。') }>
+          <TouchableOpacity style={styles.headerIconBtn} onPress={() => Alert.alert('搜索功能', '建议库搜索将在 v1.1 上线。\n\n目前可使用滚轮按分类浏览，或返回首页通过 AI 重新分析。')}>
             <MaterialIcons name="search" size={24} color="#333333" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIconBtn} onPress={() => Alert.alert('功能开发中', '「头像」功能正在开发中，预计 v1.1 上线。') }>
+          <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/(tabs)/profile')}>
             <MaterialIcons name="person-outline" size={24} color="#333333" />
           </TouchableOpacity>
         </View>

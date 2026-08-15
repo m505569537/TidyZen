@@ -26,8 +26,8 @@ export default function HistoryScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* 顶部导航栏：深绿背景 */}
       <View style={styles.navbar}>
-        {/* 左侧汉堡菜单 */}
-        <TouchableOpacity style={styles.navIconBtn} onPress={() => Alert.alert('功能开发中', '「汉堡」功能正在开发中，预计 v1.1 上线。') }>
+        {/* 左侧汉堡菜单 — 跳设置（v1.1 接侧边栏抽屉） */}
+        <TouchableOpacity style={styles.navIconBtn} onPress={() => router.push('/settings')}>
           <MaterialIcons name="menu" size={24} color={colors.onPrimary} />
         </TouchableOpacity>
 
@@ -36,7 +36,7 @@ export default function HistoryScreen() {
 
         {/* 右侧：筛选图标 + 圆形头像 */}
         <View style={styles.navRight}>
-          <TouchableOpacity style={styles.navIconBtn} onPress={() => Alert.alert('功能开发中', '「筛选」功能正在开发中，预计 v1.1 上线。') }>
+          <TouchableOpacity style={styles.navIconBtn} onPress={() => Alert.alert('筛选功能', '时间 / 房间类型 / 评分多维筛选将在 v1.1 上线。\n\n目前可左右滑动查看不同时间段的记录。')}>
             <MaterialIcons name="filter-list" size={22} color={colors.onPrimary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.avatarBtn} onPress={() => router.push('/(tabs)/profile')}>

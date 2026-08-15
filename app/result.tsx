@@ -87,8 +87,7 @@ export default function ResultScreen() {
               {result.score}
             </Text>
           </View>
-          <TouchableOpacity style={styles.infoBtn} onPress={() => Alert.alert('功能开发中', '「info」功能正在开发中，预计 v1.1 上线。') }>
-            <MaterialIcons name="info-outline" size={22} color={colors.onSurfaceVariant} />
+          <TouchableOpacity style={styles.infoBtn} onPress={() => Alert.alert('关于整洁度评分', '整洁度评分由 AI 视觉模型根据「空间利用率」「物品归位率」「视觉整洁度」三项加权得出。\n\n• 90+ 极简主义：空间充裕，整齐有序\n• 70-89 整理达人：基本到位，少量堆积\n• 50-69 整洁新手：可优化，潜力较大\n• 50 以下 需要整理：从源头减少堆积开始\n\n分值越高，越接近「知行合一」的整理之道。') }>
           </TouchableOpacity>
         </View>
 

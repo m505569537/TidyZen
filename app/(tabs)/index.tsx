@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
 import { useHistoryStore } from '../../stores/history';
@@ -280,7 +281,7 @@ export default function HomeScreen() {
         {/* ── 四、核心功能区（横向滚动多卡片）── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>核心功能区</Text>
-          <TouchableOpacity onPress={() => Alert.alert('功能开发中', '「查看全部」功能正在开发中，预计 v1.1 上线。') }>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/history')}>
             <Text style={styles.viewAll}>查看全部</Text>
           </TouchableOpacity>
         </View>
