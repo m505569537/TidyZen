@@ -5,7 +5,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
 import * as FileSystem from 'expo-file-system/legacy';
 import { colors, typography, spacing, radius, shadows } from '../constants/theme';
-import { getProfile, getHistoryRecords, type UserProfile } from '../services/storage';
+import { getProfile, getHistoryRecords, type UserProfile, clearAllData } from '../services/storage';
+import { useAnalysisStore } from '../stores/analysis';
 import { deriveLevelTag } from '../utils/level';
 
 interface SettingItemProps {
@@ -157,6 +158,7 @@ export default function SettingsScreen() {
             right={<Text style={styles.cacheSize}>{cacheSizeLabel}</Text>}
           />
           <SettingItem icon="shield" label="隐私政策" onPress={() => router.push('/privacy')} />
+          <SettingItem icon="description" label="服务条款" iconBg={colors.softBlue + '30'} onPress={() => router.push('/terms')} />
         </View>
 
         <Text style={styles.groupTitle}>帮助与关于</Text>
@@ -174,13 +176,21 @@ export default function SettingsScreen() {
           onPress={() => {
             Alert.alert(
               '退出登录',
-              '退出登录后，您将无法使用以下功能：\n\n• 同步扫描记录到云端\n• 跨设备查看历史趋势\n• 解锁「整理达人」徽章\n\n退出登录功能正在开发中，预计 v1.1 上线。',
+              '退出登录将清除本地所有数据：\n\n• 清理记录与统计数据\n• 个人资料（昵称、头像、性别）\n• 应用设置\n\n此操作不可撤销。',
               [
                 { text: '我再想想', style: 'cancel' },
                 {
                   text: '仍要退出',
                   style: 'destructive',
-                  onPress: () => Alert.alert('功能开发中', '退出登录功能正在开发中，预计 v1.1 上线。'),
+                  onPress: async () => {
+                    try {
+                      await clearAllData();
+                      useAnalysisStore.getState().reset();
+                      router.replace('/(tabs)');
+                    } catch (e) {
+                      Alert.alert('退出失败', e instanceof Error ? e.message : '未知错误');
+                    }
+                  },
                 },
               ],
             );
