@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -217,7 +217,17 @@ export default function RecordDetailScreen() {
         </View>
 
         {/* ── 9. 底部分享按钮 ── */}
-        <TouchableOpacity style={styles.shareBtn} activeOpacity={0.8} onPress={() => Alert.alert('功能开发中', '「分享」功能正在开发中，预计 v1.1 上线。') }>
+        <TouchableOpacity
+          style={styles.shareBtn}
+          activeOpacity={0.8}
+          onPress={() => {
+            const message = `我在 TidyZen 完成了一次整理，得分 ${record.score}（+${record.scoreChange}）。\n\n让 AI 帮你也梳理生活空间 👉 https://tidyzen.app`;
+            Share.share({
+              message,
+              title: 'TidyZen 清理成果',
+            }).catch((e) => Alert.alert('分享失败', e?.message ?? '未知错误'));
+          }}
+        >
           <MaterialIcons name="share" size={20} color={colors.onPrimary} />
           <Text style={styles.shareText}>分享清理成果</Text>
         </TouchableOpacity>

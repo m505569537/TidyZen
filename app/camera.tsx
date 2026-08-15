@@ -36,6 +36,10 @@ export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const [active, setActive] = useState(true);
+  // 闪光档位循环：off → on → auto → off
+  const [flashMode, setFlashMode] = useState<'off' | 'on' | 'auto'>('off');
+  const flashIcons = { off: 'flash-off', on: 'flash-on', auto: 'flash-auto' } as const;
+  const nextFlash = () => setFlashMode((m) => (m === 'off' ? 'on' : m === 'on' ? 'auto' : 'off'));
   const setPhoto = useAnalysisStore((s) => s.setPhoto);
 
   const handleBack = () => {
@@ -160,7 +164,7 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.container}>
-      <CameraView ref={cameraRef} style={styles.camera} facing="back">
+      <CameraView ref={cameraRef} style={styles.camera} facing="back" enableTorch={flashMode === 'on'}>
         {/* 顶部控制区 */}
         <SafeAreaView edges={['top']}>
           <View style={styles.topBar}>
@@ -245,8 +249,8 @@ export default function CameraScreen() {
             </TouchableOpacity>
 
             {/* 右侧闪光灯按钮 */}
-            <TouchableOpacity style={styles.sideButton} onPress={() => Alert.alert('功能开发中', '「闪光灯」功能正在开发中，预计 v1.1 上线。') }>
-              <MaterialIcons name="flash-auto" size={24} color={colors.onSurface} />
+            <TouchableOpacity style={styles.sideButton} onPress={nextFlash}>
+              <MaterialIcons name={flashIcons[flashMode]} size={24} color={colors.onSurface} />
             </TouchableOpacity>
           </View>
         </SafeAreaView>

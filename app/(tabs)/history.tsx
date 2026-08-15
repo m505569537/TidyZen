@@ -39,7 +39,7 @@ export default function HistoryScreen() {
           <TouchableOpacity style={styles.navIconBtn} onPress={() => Alert.alert('功能开发中', '「筛选」功能正在开发中，预计 v1.1 上线。') }>
             <MaterialIcons name="filter-list" size={22} color={colors.onPrimary} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.avatarBtn} onPress={() => Alert.alert('功能开发中', '「头像」功能正在开发中，预计 v1.1 上线。') }>
+          <TouchableOpacity style={styles.avatarBtn} onPress={() => router.push('/(tabs)/profile')}>
             <MaterialIcons name="person" size={20} color={colors.onPrimary} />
           </TouchableOpacity>
         </View>
