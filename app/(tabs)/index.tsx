@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { colors, typography, spacing, radius, shadows } from '../../constants/theme';
 import { useHistoryStore } from '../../stores/history';
-import { getHistoryRecords } from '../../services/storage';
+import { getHistoryRecords, getLastScan } from '../../services/storage';
 
 // ── 环形进度条（纯 RN，无 SVG 依赖）──
 function CircularProgress({
@@ -231,15 +231,38 @@ function FeatureCard({
 // ── 首页组件 ──
 export default function HomeScreen() {
   const { records, setRecords } = useHistoryStore();
+  // 上次扫描（Before）；首次扫描为 null
+  const [lastScan, setLastScan] = useState<{ photoUri: string; score: number } | null>(null);
 
-  // 从持久化存储加载历史记录到 store
-  useEffect(() => {
-    getHistoryRecords().then(setRecords);
-  }, [setRecords]);
+  // 页面聚焦时刷新数据（切回首页会重新拉取）：
+  // - getHistoryRecords() → 最新一条记录作为 After
+  // - getLastScan() → 上一次扫描作为 Before
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        const [recs, last] = await Promise.all([getHistoryRecords(), getLastScan()]);
+        if (cancelled) return;
+        setRecords(recs);
+        setLastScan(last);
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [setRecords])
+  );
 
   // 使用最新一条记录的得分；无记录时回退到 85
   const latestScore = records[0]?.score ?? 85;
   const latestThumbnail = records[0]?.thumbnailUri;
+  const latestRecord = records[0];
+
+  // ── 最近对比：Before = 上次扫描，After = 最新历史记录 ──
+  const beforePhotoUri = lastScan?.photoUri;
+  const afterPhotoUri = latestThumbnail;
+  // 只有两次扫描都存在时才计算分数差；否则显示占位文案
+  const scoreDiff =
+    lastScan && latestRecord ? latestRecord.score - lastScan.score : null;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -303,11 +326,25 @@ export default function HomeScreen() {
         <View style={styles.comparisonCard}>
           <View style={styles.comparisonLeft}>
             <View style={styles.comparisonBox}>
+              {beforePhotoUri && (
+                <Image
+                  source={{ uri: beforePhotoUri }}
+                  style={styles.comparisonImage}
+                  resizeMode="cover"
+                />
+              )}
               <View style={[styles.comparisonLabel, styles.beforeLabel]}>
                 <Text style={styles.comparisonLabelText}>Before</Text>
               </View>
             </View>
             <View style={styles.comparisonBox}>
+              {afterPhotoUri && (
+                <Image
+                  source={{ uri: afterPhotoUri }}
+                  style={styles.comparisonImage}
+                  resizeMode="cover"
+                />
+              )}
               <View style={[styles.comparisonLabel, styles.afterLabel]}>
                 <Text style={styles.comparisonLabelText}>After</Text>
               </View>
@@ -315,8 +352,21 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.comparisonRight}>
-            <MaterialIcons name="trending-up" size={24} color={colors.primary} />
-            <Text style={styles.comparisonScore}>+15分</Text>
+            {scoreDiff !== null ? (
+              <>
+                <MaterialIcons
+                  name={scoreDiff >= 0 ? 'trending-up' : 'trending-down'}
+                  size={24}
+                  color={scoreDiff >= 0 ? colors.primary : colors.error}
+                />
+                <Text style={styles.comparisonScore}>
+                  {scoreDiff > 0 ? '+' : scoreDiff < 0 ? '-' : ''}
+                  {scoreDiff}分
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.comparisonEmpty}>完成两次扫描后可查看</Text>
+            )}
           </View>
         </View>
 
@@ -566,6 +616,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
+    overflow: 'hidden',
+  },
+  comparisonImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: radius.sm,
   },
   comparisonLabel: {
     paddingHorizontal: 6,
@@ -594,5 +653,12 @@ const styles = StyleSheet.create({
     fontSize: typography.bodyMd.fontSize,
     color: colors.primary,
     marginTop: 4,
+  },
+  comparisonEmpty: {
+    fontFamily: 'BeVietnamPro_400Regular',
+    fontSize: typography.labelCaps.fontSize,
+    color: colors.onSurfaceVariant,
+    textAlign: 'center',
+    lineHeight: typography.labelCaps.lineHeight,
   },
 });

@@ -15,13 +15,13 @@ import { BoundingBox } from '../components';
 /**
  * Convert any image to JPEG base64 using expo-image-manipulator.
  * Handles HEIC/PNG/etc -> JPEG conversion for API compatibility.
- * 同时把宽度缩到 1024（保持宽高比），降低上传/API 延迟。
+ * 同时把宽度缩到 768（保持宽高比），降低上传/API 延迟。
  */
 async function toJpegBase64(uri: string): Promise<{ uri: string; base64: string }> {
   console.log('[camera] toJpegBase64: input uri=', uri);
-  const result = await manipulateAsync(uri, [{ resize: { width: 1024 } }], {
+  const result = await manipulateAsync(uri, [{ resize: { width: 768 } }], {
     format: SaveFormat.JPEG,
-    compress: 0.8,
+    compress: 0.7,
     base64: true,
   });
   if (!result.base64) {
@@ -84,14 +84,14 @@ export default function CameraScreen() {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.8, base64: true });
       if (!photo?.uri || !photo?.base64) return;
       console.log('[camera] takePicture: base64 length=', photo.base64.length, 'prefix=', photo.base64.slice(0, 6));
-      // 大图（宽 > 1024）先压缩再传 AI，降低 API 延迟；小图不放大，直接原图
+      // 大图（宽 > 768）先压缩再传 AI，降低 API 延迟；小图不放大，直接原图
       let uri = photo.uri;
       let base64 = photo.base64;
-      if (photo.width > 1024) {
+      if (photo.width > 768) {
         try {
-          const resized = await manipulateAsync(photo.uri, [{ resize: { width: 1024 } }], {
+          const resized = await manipulateAsync(photo.uri, [{ resize: { width: 768 } }], {
             format: SaveFormat.JPEG,
-            compress: 0.8,
+            compress: 0.7,
             base64: true,
           });
           if (resized.base64) {

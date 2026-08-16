@@ -115,41 +115,62 @@ export async function analyzeImage(
     console.log('[AI] selectedScene:', selectedScene);
   }
 
-  let response: Response;
-  try {
-    response = await fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${API_KEY}`,
-      },
-      body: JSON.stringify({
-        // 火山引擎豆包视觉模型 doubao-seed-2.0-pro（coding endpoint）
-        // 2026-08-02 从 mimo-v2.5 切换，原因：mimo 不可用，账号只买 coding 套餐
-        // 实测：coding endpoint 路径下 doubao-seed-2.0-pro 支持图片输入
-        // model 字段小写，严格匹配；reasoning_content 字段存在（最长 1.3k tokens）
-        model: 'doubao-seed-2.0-pro',
-        messages: [
+  const body = JSON.stringify({
+    // 火山引擎豆包视觉模型 doubao-seed-2.0-pro（coding endpoint）
+    // 2026-08-02 从 mimo-v2.5 切换，原因：mimo 不可用，账号只买 coding 套餐
+    // 实测：coding endpoint 路径下 doubao-seed-2.0-pro 支持图片输入
+    // model 字段小写，严格匹配；reasoning_content 字段存在（最长 1.3k tokens）
+    model: 'doubao-seed-2.0-pro',
+    messages: [
+      {
+        role: 'user',
+        content: [
           {
-            role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
-              },
-              {
-                type: 'text',
-                text: promptText,
-              },
-            ],
+            type: 'image_url',
+            image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+          },
+          {
+            type: 'text',
+            text: promptText,
           },
         ],
-      }),
-    });
+      },
+    ],
+  });
+
+  // 单次请求：90s 超时（模型推理通常要 30-40s+），超时后 abort 抛错
+  async function fetchOnce(): Promise<Response> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90_000);
+    try {
+      return await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${API_KEY}`,
+        },
+        body,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  let response: Response;
+  try {
+    response = await fetchOnce();
   } catch (fetchErr: any) {
-    // 网络层错误：超时、DNS 失败、SSL 等
-    console.error('[AI] fetch threw:', fetchErr);
-    throw new Error(`网络请求失败: ${fetchErr?.message ?? String(fetchErr)}`);
+    // 网络层错误：超时、DNS 失败、SSL 等 —— 等 2s 后重试一次（复用同一请求体）
+    console.error('[AI] fetch threw (attempt 1):', fetchErr);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      console.log('[AI] retrying request after 2s delay...');
+      response = await fetchOnce();
+    } catch (retryErr: any) {
+      console.error('[AI] fetch threw (attempt 2 / retry):', retryErr);
+      throw new Error(`网络请求失败: ${retryErr?.message ?? String(retryErr)}`);
+    }
   }
 
   console.log('[AI] response status:', response.status, response.statusText);
