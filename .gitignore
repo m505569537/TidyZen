@@ -43,3 +43,4 @@ yarn-error.*
 
 # 测试集原始 PNG（100MB，仅保留 JPEG 进 repo）
 docs/test-set/photos-png/
+^\.env$
