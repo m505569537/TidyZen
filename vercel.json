@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "public": true,
   "cleanUrls": true,
   "rewrites": [
     { "source": "/privacy", "destination": "/docs/privacy-policy.html" },
