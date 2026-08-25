@@ -1,0 +1,56 @@
+node_modules/
+ios/
+android/
+.expo/
+.expo-shared/
+.DS_Store
+*.log
+*.tsbuildinfo
+.env
+.env.local
+.env*.local
+
+# 源码
+app/
+components/
+services/
+stores/
+constants/
+types/
+utils/
+assets/
+
+# Expo 配置
+app.json
+App.tsx
+index.ts
+tsconfig.json
+package.json
+package-lock.json
+babel.config.js
+metro.config.js
+eas.json
+
+# 设计稿 + 测试集（大文件）
+docs/designs/
+docs/screenshots/
+docs/test-set/
+docs/material/
+
+# 内部文档（不上线）
+docs/DEVELOPMENT_PLAN.md
+docs/RRD.md
+docs/MVP_ACCEPTANCE.md
+docs/PROJECT_STATUS.md
+docs/RELEASE_PLAN.md
+docs/BUTTON_AUDIT.md
+docs/SUGGESTIONS_AUDIT.md
+docs/P2_1_STARTUP_REPORT.md
+docs/修订清单.md
+docs/建议库.md
+docs/识别特征标签体系.md
+docs/app-store/
+
+# 只保留这两个 HTML
+!docs/privacy-policy.html
+!docs/support.html
