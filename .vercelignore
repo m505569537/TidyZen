@@ -1,3 +1,6 @@
+# Vercel 部署时排除这些大文件/不必要资产
+# 只把 public/ 目录里的 2 个 HTML 部署上去
+
 node_modules/
 ios/
 android/
@@ -10,7 +13,7 @@ android/
 .env.local
 .env*.local
 
-# 源码
+# Expo 源码与配置
 app/
 components/
 services/
@@ -19,38 +22,14 @@ constants/
 types/
 utils/
 assets/
+docs/
 
-# Expo 配置
+# Expo 项目元数据
 app.json
 App.tsx
 index.ts
 tsconfig.json
 package.json
 package-lock.json
-babel.config.js
-metro.config.js
-eas.json
-
-# 设计稿 + 测试集（大文件）
-docs/designs/
-docs/screenshots/
-docs/test-set/
-docs/material/
-
-# 内部文档（不上线）
-docs/DEVELOPMENT_PLAN.md
-docs/RRD.md
-docs/MVP_ACCEPTANCE.md
-docs/PROJECT_STATUS.md
-docs/RELEASE_PLAN.md
-docs/BUTTON_AUDIT.md
-docs/SUGGESTIONS_AUDIT.md
-docs/P2_1_STARTUP_REPORT.md
-docs/修订清单.md
-docs/建议库.md
-docs/识别特征标签体系.md
-docs/app-store/
-
-# 只保留这两个 HTML
-!docs/privacy-policy.html
-!docs/support.html
+CLAUDE.md
+AGENTS.md
